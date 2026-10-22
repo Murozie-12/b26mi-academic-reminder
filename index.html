@@ -98,18 +98,16 @@ function showCourses(){
 showCourses();
 
 if (!isConfigured) {
-  $("loginBtn").disabled=true;
-  msg("Konfigurasi Firebase belum diisi. Setelah nilai konfigurasi dari Project settings dimasukkan, login dan database dapat diuji.", true);
-} else {
-  app=initializeApp(firebaseConfig); auth=getAuth(app); db=getFirestore(app);
-  $("loginBtn").addEventListener("click", async()=>{
-    const provider=new GoogleAuthProvider();
-    try { await signInWithPopup(auth,provider); }
-    catch(e) {
-      if (["auth/popup-blocked","auth/operation-not-supported-in-this-environment"].includes(e.code)) {
-        try { await signInWithRedirect(auth,provider); } catch(err){msg("Login gagal: "+err.message,true);}
-      } else msg("Login gagal: "+e.message,true);
-    }
+  $("#loginBtn").addEventListener("click", async () => {
+  const provider = new GoogleAuthProvider();
+
+  try {
+    await signInWithRedirect(auth, provider);
+  } catch (e) {
+    console.error("Login gagal:", e);
+    msg("Login gagal: " + e.code + " | " + e.message, true);
+  }
+});
   });
   $("logoutBtn").addEventListener("click",()=>signOut(auth));
   $("refreshBtn").addEventListener("click",loadTasks);
