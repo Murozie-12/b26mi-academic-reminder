@@ -74,14 +74,14 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRe
 import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "GANTI_DENGAN_API_KEY",
+  apiKey: "AIzaSyBsVOWrSKNO42A3vJ_baQNs1QoLhiBt3M0",
   authDomain: "b26mi-academic-reminder.firebaseapp.com",
   projectId: "b26mi-academic-reminder",
-  storageBucket: "GANTI_DENGAN_STORAGE_BUCKET",
+  storageBucket: "b26mi-academic-reminder.firebasestorage.app",
   messagingSenderId: "739552881698",
-  appId: "GANTI_DENGAN_APP_ID"
+  appId: "1:739552881698:web:c9e5d290e4e4c4a723ee7b"
 };
-
+  
 const $ = id => document.getElementById(id);
 const msg = (s, warn=false) => { $("message").textContent=s; $("message").className=warn?"notice":"muted"; };
 const courses = [
