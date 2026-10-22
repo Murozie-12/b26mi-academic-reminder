@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B26MI — Academic Reminder</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#64748b;--blue:#2457d6;--green:#16834a;--amber:#a86400;--red:#b42318;--line:#e4eaf2}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:#14264b;color:#fff;padding:18px 16px}header h1{font-size:1.2rem;margin:0 0 4px}header p{margin:0;color:#d7e2ff;font-size:.9rem}
+main{max-width:1050px;margin:auto;padding:16px}.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 2px 8px #1d35570a;margin-bottom:12px}
+h2{font-size:1.05rem;margin:0 0 12px}.muted{color:var(--muted);font-size:.92rem}.pill{display:inline-block;border-radius:999px;padding:4px 9px;font-size:.8rem;background:#eef3ff;color:#214db8}
+button,input,select,textarea{font:inherit}button{border:0;border-radius:10px;background:var(--blue);color:#fff;padding:10px 13px;cursor:pointer;font-weight:600}button.secondary{background:#e9eef7;color:#1f2a44}button.danger{background:#fff0ee;color:var(--red)}button:disabled{opacity:.5;cursor:not-allowed}
+input,select,textarea{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:9px;background:white;color:var(--ink);margin:5px 0 10px}
+label{font-size:.88rem;font-weight:600;display:block}.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.task{border:1px solid var(--line);border-radius:12px;padding:12px;margin:9px 0;background:#fff}.task h3{margin:0 0 6px;font-size:1rem}.status{font-size:.83rem;font-weight:700}.done{color:var(--green)}.doing{color:var(--amber)}.todo{color:var(--red)}
+.notice{padding:12px;border-radius:10px;background:#fff8e6;border:1px solid #f1d58b;color:#714d00;font-size:.9rem}
+.hidden{display:none!important}footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
+</style>
+</head>
+<body>
+<header><h1>B26MI — Academic Reminder</h1><p>Pengingat tugas, presentasi, dan progres akademik</p></header>
+<main>
+  <section class="card">
+    <div class="actions" style="justify-content:space-between">
+      <div><h2>Selamat datang di B26MI</h2><div id="authStatus" class="muted">Belum login</div></div>
+      <button id="loginBtn">Masuk dengan Google</button>
+      <button id="logoutBtn" class="secondary hidden">Keluar</button>
+    </div>
+    <p class="muted">Starter awal. Setelah konfigurasi Firebase dan aturan keamanan dipasang, data dapat digunakan bersama oleh kelas.</p>
+  </section>
+  <div id="appArea" class="hidden">
+    <div class="row">
+      <section class="card"><div class="muted">Tugas terlihat</div><h2 id="taskCount">0</h2></section>
+      <section class="card"><div class="muted">Tugas selesai oleh saya</div><h2 id="doneCount">0</h2></section>
+      <section class="card"><div class="muted">Peran akun</div><h2 id="roleLabel">Mahasiswa</h2><span id="rolePill" class="pill">mahasiswa</span></section>
+    </div>
+    <section id="adminPanel" class="card hidden">
+      <h2>Panel Admin — Tambahkan tugas</h2>
+      <p class="muted">Hanya akun yang sudah ditetapkan admin di Firestore yang boleh membuat tugas.</p>
+      <form id="taskForm">
+        <div class="formgrid">
+          <div><label>Nama tugas</label><input id="taskTitle" required maxlength="120" placeholder="Contoh: Presentasi proposal"></div>
+          <div><label>Mata kuliah</label><select id="courseSelect" required></select></div>
+          <div><label>Jenis</label><select id="taskType"><option value="individu">Individu</option><option value="kelompok">Kelompok</option><option value="presentasi">Presentasi</option><option value="kuis">Kuis</option><option value="uts">UTS</option><option value="uas">UAS</option></select></div>
+          <div><label>Tenggat</label><input id="dueAt" type="datetime-local" required></div>
+        </div>
+        <label>Instruksi / catatan</label><textarea id="taskDescription" rows="2" maxlength="2000" placeholder="Petunjuk pengerjaan, format pengumpulan, dan lain-lain"></textarea>
+        <button type="submit">Simpan tugas</button>
+      </form>
+    </section>
+    <section class="card">
+      <div class="actions" style="justify-content:space-between"><h2>Daftar tugas</h2><button id="refreshBtn" class="secondary">Muat ulang</button></div>
+      <div id="tasksList"><p class="muted">Memuat tugas…</p></div>
+    </section>
+    <section class="card">
+      <h2>10 Mata Kuliah</h2>
+      <p class="muted">Nama awal dapat diganti admin setelah struktur data siap.</p>
+      <div id="coursesList" class="row"></div>
+    </section>
+  </div>
+  <div id="message" class="notice">Sebelum digunakan kelas, admin harus mengisi konfigurasi Firebase dan menerapkan aturan Firestore yang aman. Jangan mengaktifkan aturan publik.</div>
+</main>
+<footer>B26MI — Academic Reminder · Versi starter</footer>
+<script type="module">
+/*
+LANGKAH KONFIGURASI:
+1. Buka Project settings > General > Your apps > Web app.
+2. Salin konfigurasi Firebase dan ganti nilai di bawah.
+3. Jangan bagikan token privat; Firebase web config bukan kata sandi, tetapi aturan database tetap wajib aman.
+*/
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "GANTI_DENGAN_API_KEY",
+  authDomain: "b26mi-academic-reminder.firebaseapp.com",
+  projectId: "b26mi-academic-reminder",
+  storageBucket: "GANTI_DENGAN_STORAGE_BUCKET",
+  messagingSenderId: "739552881698",
+  appId: "GANTI_DENGAN_APP_ID"
+};
+
+const $ = id => document.getElementById(id);
+const msg = (s, warn=false) => { $("message").textContent=s; $("message").className=warn?"notice":"muted"; };
+const courses = [
+"Matakuliah 1","Matakuliah 2","Matakuliah 3","Matakuliah 4","Matakuliah 5",
+"Matakuliah 6","Matakuliah 7","Matakuliah 8","Matakuliah 9","Matakuliah 10"
+];
+let app, auth, db, currentUser=null, currentRole="mahasiswa";
+const isConfigured = !firebaseConfig.apiKey.startsWith("GANTI_") && !firebaseConfig.appId.startsWith("GANTI_");
+
+function showCourses(){
+  $("courseSelect").innerHTML = courses.map((c,i)=>`<option value="${i+1}">${c}</option>`).join("");
+  $("coursesList").innerHTML = courses.map((c,i)=>`<div class="card"><span class="pill">MK ${i+1}</span><p>${c}</p></div>`).join("");
+}
+showCourses();
+
+if (!isConfigured) {
+  $("loginBtn").disabled=true;
+  msg("Konfigurasi Firebase belum diisi. Setelah nilai konfigurasi dari Project settings dimasukkan, login dan database dapat diuji.", true);
+} else {
+  app=initializeApp(firebaseConfig); auth=getAuth(app); db=getFirestore(app);
+  $("loginBtn").addEventListener("click", async()=>{
+    const provider=new GoogleAuthProvider();
+    try { await signInWithPopup(auth,provider); }
+    catch(e) {
+      if (["auth/popup-blocked","auth/operation-not-supported-in-this-environment"].includes(e.code)) {
+        try { await signInWithRedirect(auth,provider); } catch(err){msg("Login gagal: "+err.message,true);}
+      } else msg("Login gagal: "+e.message,true);
+    }
+  });
+  $("logoutBtn").addEventListener("click",()=>signOut(auth));
+  $("refreshBtn").addEventListener("click",loadTasks);
+  onAuthStateChanged(auth, async user=>{
+    currentUser=user;
+    $("appArea").classList.toggle("hidden",!user);
+    $("loginBtn").classList.toggle("hidden",!!user);
+    $("logoutBtn").classList.toggle("hidden",!user);
+    $("authStatus").textContent=user?`${user.displayName||"Mahasiswa"} · ${user.email}`:"Belum login";
+    if(user){
+      try {
+        const snap=await getDoc(doc(db,"users",user.uid));
+        currentRole=snap.exists() ? (snap.data().role||"mahasiswa") : "mahasiswa";
+        $("roleLabel").textContent=currentRole==="admin"?"Admin":currentRole==="ketua"?"Ketua kelompok":"Mahasiswa";
+        $("rolePill").textContent=currentRole;
+        $("adminPanel").classList.toggle("hidden",currentRole!=="admin");
+        await loadTasks();
+      } catch(e){msg("Akun berhasil login, tetapi akses database belum tersedia. Pastikan aturan Firestore sudah dipasang dengan aman. Detail: "+e.message,true);}
+    }
+  });
+  $("taskForm").addEventListener("submit",async e=>{
+    e.preventDefault();
+    if(currentRole!=="admin"){msg("Hanya admin yang boleh menambahkan tugas.",true);return;}
+    try{
+      await addDoc(collection(db,"tasks"),{
+        title:$("taskTitle").value.trim(), courseId:$("courseSelect").value,
+        type:$("taskType").value, dueAt:new Date($("dueAt").value),
+        description:$("taskDescription").value.trim(), createdBy:currentUser.uid,
+        createdAt:serverTimestamp()
+      });
+      e.target.reset(); msg("Tugas berhasil disimpan."); await loadTasks();
+    }catch(err){msg("Gagal menyimpan tugas: "+err.message,true);}
+  });
+}
+async function loadTasks(){
+  if(!db||!currentUser)return;
+  try{
+    const snap=await getDocs(query(collection(db,"tasks"),orderBy("dueAt","asc")));
+    const tasks=snap.docs.map(d=>({id:d.id,...d.data()}));
+    $("taskCount").textContent=tasks.length;
+    const progSnap=await getDocs(collection(db,"task_progress"));
+    const myProgress=new Map(progSnap.docs.filter(d=>d.data().userId===currentUser.uid).map(d=>[d.data().taskId,d.data()]));
+    $("doneCount").textContent=[...myProgress.values()].filter(p=>p.status==="selesai").length;
+    $("tasksList").innerHTML=tasks.length?tasks.map(t=>{
+      const p=myProgress.get(t.id); const status=p?.status||"belum";
+      const due=t.dueAt?.toDate?t.dueAt.toDate():t.dueAt?new Date(t.dueAt):null;
+      const dueText=due&&!isNaN(due)?due.toLocaleString("id-ID"):"Belum ditentukan";
+      return `<article class="task"><h3>${escapeHtml(t.title||"Tugas tanpa judul")}</h3><div class="muted">${escapeHtml(courses[Number(t.courseId)-1]||"Mata kuliah")} · ${escapeHtml(t.type||"tugas")}</div><p>${escapeHtml(t.description||"")}</p><p class="muted">Tenggat: ${dueText}</p><div class="actions"><span class="status ${status==="selesai"?"done":status==="dikerjakan"?"doing":"todo"}">Status saya: ${status==="selesai"?"✅ Selesai":status==="dikerjakan"?"🟡 Sedang dikerjakan":"🔴 Belum dikerjakan"}</span><button class="secondary" data-progress="${t.id}" data-status="${status}">Ubah progres</button></div></article>`;
+    }).join(""):"<p class='muted'>Belum ada tugas yang dimasukkan.</p>";
+    document.querySelectorAll("[data-progress]").forEach(btn=>btn.onclick=()=>updateProgress(btn.dataset.progress,btn.dataset.status));
+    msg("Data berhasil dimuat.");
+  }catch(e){msg("Tidak dapat membaca tugas/progres. Aturan Firestore mungkin belum disiapkan. Detail: "+e.message,true);}
+}
+async function updateProgress(taskId,oldStatus){
+  const choices=[["belum","Belum dikerjakan"],["dikerjakan","Sedang dikerjakan"],["selesai","Selesai"]];
+  const next=prompt("Pilih status dengan mengetik: belum, dikerjakan, atau selesai",oldStatus==="belum"?"dikerjakan":oldStatus==="dikerjakan"?"selesai":"belum");
+  if(!choices.some(c=>c[0]===next))return;
+  try{
+    const progressId=`${taskId}_${currentUser.uid}`;
+    await setDoc(doc(db,"task_progress",progressId),{taskId,userId:currentUser.uid,status:next,updatedAt:serverTimestamp()});
+    await loadTasks();
+  }catch(e){msg("Gagal memperbarui progres: "+e.message,true);}
+}
+function escapeHtml(v){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+</script>
+</body>
+</html>

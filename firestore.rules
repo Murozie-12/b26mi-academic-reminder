@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    function isSelf(uid) { return signedIn() && request.auth.uid == uid; }
+
+    // Profile: users cannot grant themselves admin/ketua privileges.
+    match /users/{uid} {
+      allow read: if isSelf(uid) || isAdmin();
+      allow create: if isSelf(uid)
+        && request.resource.data.role == 'mahasiswa'
+        && request.resource.data.keys().hasOnly(['displayName','email','role','createdAt']);
+      allow update: if isSelf(uid)
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName']);
+      allow delete: if isAdmin();
+    }
+
+    // Course/task data is visible to signed-in class members; only admins manage it.
+    match /courses/{courseId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+    match /tasks/{taskId} {
+      allow read: if signedIn();
+      allow create: if isAdmin()
+        && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+
+    // Individual progress: each student can read/write only their own document.
+    // Group visibility should be implemented in a later, explicit group membership rule.
+    match /task_progress/{progressId} {
+      allow read: if signedIn()
+        && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasOnly(['taskId','userId','status','updatedAt'])
+        && request.resource.data.status in ['belum','dikerjakan','selesai'];
+      allow update: if signedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.taskId == resource.data.taskId
+        && request.resource.data.keys().hasOnly(['taskId','userId','status','updatedAt'])
+        && request.resource.data.status in ['belum','dikerjakan','selesai'];
+      allow delete: if isAdmin();
+    }
+
+    match /groups/{groupId} {
+      allow read: if signedIn() && (isAdmin()
+        || (resource.data.memberUids is list && request.auth.uid in resource.data.memberUids));
+      allow create, update, delete: if isAdmin();
+    }
+    match /notifications/{notificationId} {
+      allow read: if signedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}
