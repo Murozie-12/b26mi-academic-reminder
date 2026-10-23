@@ -241,27 +241,15 @@ footer{padding:30px;text-align:center;color:var(--muted);font-size:.85rem}
               <option value="kelompok">👥 Khusus Tugas Kelompok</option>
             </select>
           </div>
+          <div>
+            <label>Nomor WA PJMK Tugas Ini (Awali 62)</label>
+            <input id="taskPjmkPhone" type="text" placeholder="628xxxxxxxxxx" required value="628123456789">
+          </div>
         </div>
 
         <label style="margin-top: 4px;">Instruksi / catatan</label>
         <textarea id="taskDescription" rows="2" maxlength="2000" placeholder="Petunjuk pengerjaan, format pengumpulan, dan lain-lain"></textarea>
         <button type="submit" id="submitTaskBtn" style="margin-top: 6px;">Simpan tugas</button>
-      </form>
-
-      <hr style="border:0; border-top:1px solid var(--line); margin: 24px 0;">
-      <h2>Panel Admin — Atur Nomor WhatsApp PJMK per Mata Kuliah</h2>
-      <form id="pjmkForm">
-        <div class="formgrid">
-          <div>
-            <label>Pilih Mata Kuliah</label>
-            <select id="pjmkCourseSelect" required></select>
-          </div>
-          <div>
-            <label>Nomor WhatsApp PJMK (Awali 62)</label>
-            <input id="pjmkPhoneInput" type="text" placeholder="628xxxxxxxxxx" required>
-          </div>
-        </div>
-        <button type="submit" style="margin-top: 6px; background: var(--green);">Simpan Nomor PJMK Matkul Ini</button>
       </form>
 
       <hr style="border:0; border-top:1px solid var(--line); margin: 24px 0;">
@@ -366,7 +354,6 @@ let currentUser = null;
 let currentRole = "mahasiswa";
 let editingTaskId = null;
 let allTasksData = [];
-let pjmkDataMap = {}; // Menyimpan database nomor WA PJMK per matkul
 
 const themeToggleBtn = $("themeToggleBtn");
 const currentTheme = localStorage.getItem("theme") || "light";
@@ -393,7 +380,6 @@ function showCourses() {
   const optionsHtml = courses.map((course, i) => `<option value="${i + 1}">${escapeHtml(course)}</option>`).join("");
   $("courseSelect").innerHTML = optionsHtml;
   $("scheduleCourseSelect").innerHTML = optionsHtml;
-  $("pjmkCourseSelect").innerHTML = optionsHtml;
 }
   
 function escapeHtml(value) {
@@ -466,7 +452,6 @@ if (!isConfigured) {
       loadTasks();
       loadSchedules();
       loadAnnouncement();
-      loadPjmkPhones();
       showToast("Data berhasil dimuat ulang.");
     });
 
@@ -500,7 +485,6 @@ if (!isConfigured) {
         await loadTasks();
         await loadSchedules();
         await loadAnnouncement();
-        await loadPjmkPhones();
         if (currentRole === "admin") await loadAdminDashboard();
       } catch (error) {
         showToast("Login berhasil, tetapi profil database gagal dibaca: " + error.message, true);
@@ -523,27 +507,7 @@ if (!isConfigured) {
       }
     });
 
-    // Simpan Nomor PJMK per Matkul
-    $("pjmkForm").addEventListener("submit", async event => {
-      event.preventDefault();
-      if (!currentUser || currentRole !== "admin") return;
-
-      const courseId = $("pjmkCourseSelect").value;
-      const phone = $("pjmkPhoneInput").value.trim();
-
-      try {
-        await setDoc(doc(db, "pjmk_contacts", courseId), {
-          courseId: courseId,
-          phone: phone,
-          updatedAt: serverTimestamp()
-        });
-        showToast("Nomor PJMK mata kuliah ini berhasil disimpan.");
-        loadPjmkPhones();
-      } catch (error) {
-        showToast("Gagal menyimpan nomor PJMK: " + error.message, true);
-      }
-    });
-
+    // Simpan Tugas Beserta Nomor PJMK Spesifik Tugas Tersebut
     $("taskForm").addEventListener("submit", async event => {
       event.preventDefault();
       if (!currentUser || currentRole !== "admin") return;
@@ -558,6 +522,7 @@ if (!isConfigured) {
           courseId: $("courseSelect").value,
           type: $("taskType").value,
           target: $("taskTarget").value,
+          pjmkPhone: $("taskPjmkPhone").value.trim(), // Menyimpan nomor WA PJMK khusus tugas ini
           dueAt: new Date($("dueAt").value),
           description: $("taskDescription").value.trim()
         };
@@ -621,6 +586,7 @@ function resetFormToTambah() {
   $("submitTaskBtn").textContent = "Simpan tugas";
   $("submitTaskBtn").disabled = false;
   $("cancelEditBtn").classList.add("hidden");
+  $("taskPjmkPhone").value = "628123456789"; // Reset default
 }
 
 async function loadAnnouncement() {
@@ -635,21 +601,6 @@ async function loadAnnouncement() {
     }
   } catch (e) {
     $("announcementText").textContent = "Gagal memuat pengumuman.";
-  }
-}
-
-async function loadPjmkPhones() {
-  try {
-    const snap = await getDocs(collection(db, "pjmk_contacts"));
-    pjmkDataMap = {};
-    snap.forEach(item => {
-      const data = item.data();
-      pjmkDataMap[data.courseId] = data.phone;
-    });
-    // Muat ulang daftar tugas agar tombol WA memperbarui nomor sesuai matkulnya masing-masing
-    if (db && currentUser) loadTasks();
-  } catch (e) {
-    console.error("Gagal memuat nomor PJMK");
   }
 }
 
@@ -811,10 +762,10 @@ async function loadTasks() {
 
           const gcalUrl = generateGoogleCalendarUrl(task.title, course, due, task.description);
 
-          // Ambil nomor WA sesuai mata kuliah tugas tersebut (jika belum diatur admin, arahkan ke pesan default)
-          const pjmkPhone = pjmkDataMap[task.courseId] || "628123456789";
+          // Menggunakan nomor WA PJMK yang spesifik tersimpan di masing-masing tugas
+          const taskPjmkPhone = task.pjmkPhone || "628123456789";
           const waMessage = encodeURIComponent(`Assalamu'alaikum, mau bertanya terkait tugas [${course}] "${task.title}".`);
-          const waUrl = `https://wa.me/${pjmkPhone}?text=${waMessage}`;
+          const waUrl = `https://wa.me/${taskPjmkPhone}?text=${waMessage}`;
 
           const adminControls = currentRole === "admin" ? `
             <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); display:flex; gap: 8px;">
@@ -854,7 +805,7 @@ async function loadTasks() {
                   </div>
                 </div>
                 <div class="actions">
-                  <span class="status ${statusClass}" style="margin-right:8px; padding: 6px 10px; border-radius: 8px; background: var(--line);">
+                  <span class="status ${statusStatus || statusClass}" style="margin-right:8px; padding: 6px 10px; border-radius: 8px; background: var(--line);">
                     ${statusIcon} ${statusText}
                   </span>
                   <button class="secondary" data-progress="${escapeHtml(task.id)}" data-status="${escapeHtml(status)}">
@@ -925,6 +876,7 @@ function triggerEditTask(taskId) {
   $("courseSelect").value = task.courseId || "1";
   $("taskType").value = task.type || "individu";
   $("taskTarget").value = task.target || "semua";
+  $("taskPjmkPhone").value = task.pjmkPhone || "628123456789"; // Mengisi nomor WA PJMK khusus tugas ini
   $("taskDescription").value = task.description || "";
 
   if (task.dueAt) {
@@ -932,6 +884,7 @@ function triggerEditTask(taskId) {
     if (!isNaN(d.getTime())) {
       const tzOffset = d.getTimezoneOffset() * 60000;
       const localISOTime = (new Date(d.getTime() - tzOffset)).toISOString().slice(0, 16);
+      $("dueAt.value", localISOTime);
       $("dueAt").value = localISOTime;
     }
   }
@@ -949,7 +902,7 @@ async function triggerDeleteTask(taskId) {
     showToast("Tugas berhasil dihapus.");
     await loadTasks();
     if (currentRole === "admin") await loadAdminDashboard();
-    } catch (error) {
+  } catch (error) {
     showToast("Gagal menghapus tugas: " + error.message, true);
   } finally {
     document.body.style.cursor = "default";
