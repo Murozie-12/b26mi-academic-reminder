@@ -4,12 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>B26MI — Academic Reminder</title>
-<!-- Memuat Google Font: Plus Jakarta Sans untuk tampilan modern -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* Variabel Warna Mode Terang (Default) */
 :root {
   --bg: #f8fafc;
   --card: #ffffff;
@@ -25,7 +23,6 @@
   --header-bg: #0f172a;
 }
 
-/* Variabel Warna Mode Gelap (Dark Mode) */
 [data-theme="dark"] {
   --bg: #0b0f19;
   --card: #131c2e;
@@ -73,11 +70,44 @@ label{font-size:.85rem;font-weight:600;display:block; margin-bottom: 2px;}
 
 .task{border:1px solid var(--line);border-radius:16px;padding:18px;margin:12px 0;background:var(--card); transition: transform 0.2s ease, box-shadow 0.2s ease;}
 .task:hover{box-shadow: 0 6px 20px rgba(0,0,0,0.08); transform: translateY(-2px);}
+.task.completed-task { opacity: 0.65; background: rgba(0,0,0,0.01); }
 .task h3{margin:0 0 8px;font-size:1.1rem; font-weight: 600;}
 .status{font-size:.85rem;font-weight:700}
 .done{color:var(--green)}
 .doing{color:var(--amber)}
 .todo{color:var(--red)}
+
+/* TOAST NOTIFICATION (Mengambang di Pojok Kanan Bawah) */
+#toastContainer {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.toast {
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  padding: 14px 18px;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideIn 0.3s ease forwards;
+  max-width: 350px;
+}
+.toast.error { border-left: 4px solid var(--red); }
+.toast.success { border-left: 4px solid var(--green); }
+@keyframes slideIn {
+  from { transform: translateY(100px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
 
 .notice{padding:14px;border-radius:12px;background:rgba(245, 158, 11, 0.1);border:1px solid rgba(245, 158, 11, 0.3);color:var(--amber);font-size:.9rem; margin-bottom: 16px; font-weight: 500;}
 .hidden{display:none!important}
@@ -86,7 +116,6 @@ footer{padding:30px;text-align:center;color:var(--muted);font-size:.85rem}
 #tasksList.show-active-only .task-done { display: none !important; }
 #tasksList.show-done-only .task-active { display: none !important; }
 
-/* Tombol Saklar Tema */
 .theme-toggle {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -108,7 +137,6 @@ footer{padding:30px;text-align:center;color:var(--muted);font-size:.85rem}
     <h1>B26MI — Academic Reminder</h1>
     <p>Pengingat tugas, presentasi, dan progres akademik</p>
   </div>
-  <!-- Tombol Toggle Dark/Light Mode -->
   <button id="themeToggleBtn" class="theme-toggle">🌙 Mode Gelap</button>
 </header>
 
@@ -158,7 +186,7 @@ footer{padding:30px;text-align:center;color:var(--muted);font-size:.85rem}
       </div>
     </section>
 
-    <!-- PANEL TAMBAH/EDIT TUGAS ADMIN -->
+    <!-- PANEL ADMIN -->
     <section id="adminPanel" class="card hidden">
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <h2 id="formTitle">Panel Admin — Tambahkan tugas</h2>
@@ -248,7 +276,11 @@ footer{padding:30px;text-align:center;color:var(--muted);font-size:.85rem}
     </section>
   </div>
 </main>
-<footer>B26MI — Academic Reminder · Versi Elegan & Modern</footer>
+
+<!-- CONTAINER UNTUK TOAST NOTIFICATION -->
+<div id="toastContainer"></div>
+
+<footer>B26MI — Academic Reminder · Versi Lengkap & Profesional</footer>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
@@ -265,10 +297,25 @@ const firebaseConfig = {
 };
   
 const $ = id => document.getElementById(id);
+
+// FUNGSI TOAST NOTIFICATION MENGAMBANG
+const showToast = (text, isError = false) => {
+  const container = $("toastContainer");
+  const toast = document.createElement("div");
+  toast.className = `toast ${isError ? 'error' : 'success'}`;
+  toast.innerHTML = `<span>${isError ? '⚠️' : '✅'}</span> <span>${escapeHtml(text)}</span>`;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateY(20px)";
+    toast.style.transition = "all 0.3s ease";
+    setTimeout(() => toast.remove(), 3000);
+  }, 3500);
+};
+
 const msg = (text, warn = false) => {
-  $("message").style.display = "block";
-  $("message").textContent = text;
-  $("message").className = warn ? "notice" : "muted";
+  showToast(text, warn);
 };
 
 const courses = [
@@ -285,9 +332,6 @@ let currentRole = "mahasiswa";
 let editingTaskId = null;
 let allTasksData = [];
 
-// ========================================
-// LOGIKA DARK / LIGHT MODE
-// ========================================
 const themeToggleBtn = $("themeToggleBtn");
 const currentTheme = localStorage.getItem("theme") || "light";
 
@@ -334,6 +378,26 @@ function getDeadlineInfo(due) {
   return { text: "🔴 Kurang dari 1 jam!", color: "var(--red)", weight: "bold" };
 }
 
+// FUNGSI PEMBUAT LINK GOOGLE CALENDAR
+function generateGoogleCalendarUrl(taskTitle, courseName, dueDate, description) {
+  if (!dueDate || isNaN(dueDate.getTime())) return "#";
+  
+  // Format waktu untuk Google Calendar (YYYYMMDDTHHmmssZ)
+  const formatGCalTime = (date) => {
+    return date.toISOString().replace(/-|:|\.\d\d\d/g,"");
+  };
+
+  const startTime = formatGCalTime(dueDate);
+  // Set durasi acara 1 jam ke depan
+  const endDateObj = new Date(dueDate.getTime() + 60 * 60 * 1000);
+  const endTime = formatGCalTime(endDateObj);
+
+  const text = encodeURIComponent(`Tugas [${courseName}]: ${taskTitle}`);
+  const details = encodeURIComponent(`${description || "Tidak ada catatan."}\n\nPengingat Akademik B26MI`);
+  
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${startTime}/${endTime}&details=${details}`;
+}
+
 showCourses();
 
 document.querySelectorAll(".filter-btn").forEach(btn => {
@@ -352,7 +416,7 @@ const isConfigured = Boolean(firebaseConfig.apiKey) && !firebaseConfig.apiKey.st
 
 if (!isConfigured) {
   $("loginBtn").disabled = true;
-  msg("Konfigurasi Firebase belum lengkap.", true);
+  showToast("Konfigurasi Firebase belum lengkap.", true);
 } else {
   try {
     app = initializeApp(firebaseConfig);
@@ -363,17 +427,18 @@ if (!isConfigured) {
 
     $("loginBtn").addEventListener("click", async () => {
       try { await signInWithPopup(auth, new GoogleAuthProvider()); $("message").style.display = "none"; }
-      catch (error) { msg("Login gagal: " + error.message, true); }
+      catch (error) { showToast("Login gagal: " + error.message, true); }
     });
 
     $("logoutBtn").addEventListener("click", async () => {
-      try { await signOut(auth); msg("Kamu berhasil keluar.", false); }
-      catch (error) { msg("Gagal logout: " + error.message, true); }
+      try { await signOut(auth); showToast("Kamu berhasil keluar.", false); }
+      catch (error) { showToast("Gagal logout: " + error.message, true); }
     });
 
     $("refreshBtn").addEventListener("click", () => {
       loadTasks();
       loadSchedules();
+      showToast("Data berhasil dimuat ulang.");
     });
 
     onAuthStateChanged(auth, async user => {
@@ -407,7 +472,7 @@ if (!isConfigured) {
         await loadSchedules();
         if (currentRole === "admin") await loadAdminDashboard();
       } catch (error) {
-        msg("Login berhasil, tetapi profil database gagal dibaca: " + error.message, true);
+        showToast("Login berhasil, tetapi profil database gagal dibaca: " + error.message, true);
       }
     });
 
@@ -422,7 +487,7 @@ if (!isConfigured) {
 
         const taskData = {
           title: $("taskTitle").value.trim(),
-          courseId: $("courseSelect").value,
+                    courseId: $("courseSelect").value,
           type: $("taskType").value,
           target: $("taskTarget").value,
           dueAt: new Date($("dueAt").value),
@@ -432,20 +497,19 @@ if (!isConfigured) {
         if (editingTaskId) {
           taskData.updatedAt = serverTimestamp();
           await updateDoc(doc(db, "tasks", editingTaskId), taskData);
-          msg("Tugas berhasil diperbarui.", false);
+          showToast("Tugas berhasil diperbarui.");
         } else {
           taskData.createdBy = currentUser.uid;
           taskData.createdAt = serverTimestamp();
           await addDoc(collection(db, "tasks"), taskData);
-          msg("Tugas baru berhasil disimpan.", false);
+          showToast("Tugas baru berhasil disimpan.");
         }
 
         resetFormToTambah();
         await loadTasks();
         if (currentRole === "admin") await loadAdminDashboard();
-        setTimeout(() => { $("message").style.display = "none"; }, 3000);
       } catch (error) {
-        msg("Gagal menyimpan tugas: " + error.message, true);
+        showToast("Gagal menyimpan tugas: " + error.message, true);
         $("submitTaskBtn").disabled = false;
         $("submitTaskBtn").textContent = editingTaskId ? "Update Tugas" : "Simpan tugas";
       }
@@ -464,11 +528,10 @@ if (!isConfigured) {
         });
 
         event.target.reset();
-        msg("Jadwal kuliah berhasil ditambahkan.", false);
+        showToast("Jadwal kuliah berhasil ditambahkan.");
         await loadSchedules();
-        setTimeout(() => { $("message").style.display = "none"; }, 3000);
       } catch (error) {
-        msg("Gagal menyimpan jadwal: " + error.message, true);
+        showToast("Gagal menyimpan jadwal: " + error.message, true);
       }
     });
 
@@ -478,8 +541,8 @@ if (!isConfigured) {
     });
 
   } catch (error) {
-        $("loginBtn").disabled = true;
-    msg("Firebase gagal diinisialisasi: " + error.message, true);
+    $("loginBtn").disabled = true;
+    showToast("Firebase gagal diinisialisasi: " + error.message, true);
   }
 }
 
@@ -542,7 +605,7 @@ async function loadAdminDashboard() {
         }).join("")
       : "<p class='muted'>Belum ada progres mahasiswa.</p>";
   } catch (error) {
-    msg("Dashboard Admin gagal dimuat: " + error.message, true);
+    showToast("Dashboard Admin gagal dimuat: " + error.message, true);
   }
 }
 
@@ -589,9 +652,10 @@ async function deleteSchedule(schedId) {
   if (!confirm("Hapus jadwal ini?")) return;
   try {
     await deleteDoc(doc(db, "schedules", schedId));
+    showToast("Jadwal berhasil dihapus.");
     loadSchedules();
   } catch (error) {
-    msg("Gagal menghapus jadwal: " + error.message, true);
+    showToast("Gagal menghapus jadwal: " + error.message, true);
   }
 }
 
@@ -611,12 +675,26 @@ async function loadTasks() {
 
     $("doneCount").textContent = [...myProgress.values()].filter(progress => progress.status === "selesai").length;
 
-    $("tasksList").innerHTML = tasks.length
-      ? tasks.map(task => {
-          const progress = myProgress.get(task.id);
-          const status = progress?.status || "belum";
+    // PENYORTIRAN: Pisahkan tugas yang belum selesai dan yang sudah selesai (Selesai dipindah ke bawah)
+    const activeTasks = [];
+    const completedTasks = [];
+
+    tasks.forEach(task => {
+      const progress = myProgress.get(task.id);
+      const status = progress?.status || "belum";
+      if (status === "selesai") {
+        completedTasks.push({ task, progress, status });
+      } else {
+        activeTasks.push({ task, progress, status });
+      }
+    });
+
+    // Gabungkan dengan urutan: Belum selesai di atas, Selesai di bawah
+    const sortedTasks = [...activeTasks, ...completedTasks];
+
+    $("tasksList").innerHTML = sortedTasks.length
+      ? sortedTasks.map(({ task, progress, status }) => {
           const due = task.dueAt?.toDate ? task.dueAt.toDate() : task.dueAt ? new Date(task.dueAt) : null;
-          
           const dueText = due && !isNaN(due.getTime()) ? due.toLocaleString("id-ID") : "Belum ditentukan";
           const dueInfo = getDeadlineInfo(due); 
           
@@ -624,11 +702,13 @@ async function loadTasks() {
           const statusIcon = status === "selesai" ? "✅" : status === "dikerjakan" ? "🟡" : "🔴";
           const statusClass = status === "selesai" ? "done" : status === "dikerjakan" ? "doing" : "todo";
           const course = courses[Number(task.courseId) - 1] || "Mata kuliah";
-          const filterCategoryClass = status === "selesai" ? "task-done" : "task-active";
+          const filterCategoryClass = status === "selesai" ? "task-done completed-task" : "task-active";
 
           const targetBadge = task.target === "kelompok" 
             ? `<span class="pill" style="background:rgba(217, 119, 6, 0.1); color:var(--amber);">👥 Kelompok</span>` 
             : `<span class="pill">🌐 Semua</span>`;
+
+          const gcalUrl = generateGoogleCalendarUrl(task.title, course, due, task.description);
 
           const adminControls = currentRole === "admin" ? `
             <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); display:flex; gap: 8px;">
@@ -657,7 +737,10 @@ async function loadTasks() {
                   <span class="muted">Tenggat:</span> <strong style="color:var(--ink)">${escapeHtml(dueText)}</strong><br>
                   <span style="color: ${dueInfo.color}; font-weight: ${dueInfo.weight}; font-size: 0.8rem; margin-top: 2px; display: inline-block;">
                     ${dueInfo.text}
-                  </span>
+                  </span><br>
+                  <a href="${gcalUrl}" target="_blank" style="display:inline-block; margin-top:6px; font-size:0.75rem; color:var(--blue); text-decoration:none; font-weight:600;">
+                    📅 + Google Calendar
+                  </a>
                 </div>
                 <div class="actions">
                   <span class="status ${statusClass}" style="margin-right:8px; padding: 6px 10px; border-radius: 8px; background: var(--line);">
@@ -689,7 +772,7 @@ async function loadTasks() {
     }
 
   } catch (error) {
-    msg("Gagal memuat tugas/progres. Detail: " + error.message, true);
+    showToast("Gagal memuat tugas/progres. Detail: " + error.message, true);
   }
 }
   
@@ -706,12 +789,13 @@ async function updateProgress(taskId, oldStatus) {
     await setDoc(doc(db, "task_progress", progressId), {
       taskId, userId: currentUser.uid, status: nextStatus, updatedAt: serverTimestamp()
     });
+    showToast("Progres tugas diperbarui.");
     await loadTasks();
     const activeFilterBtn = document.querySelector('.filter-btn:not(.secondary)');
     if(activeFilterBtn) activeFilterBtn.click();
     if (currentRole === "admin") await loadAdminDashboard();
   } catch (error) {
-    msg("Gagal memperbarui progres: " + error.message, true);
+    showToast("Gagal memperbarui progres: " + error.message, true);
   } finally {
     document.body.style.cursor = "default";
   }
@@ -744,10 +828,6 @@ function triggerEditTask(taskId) {
   $("adminPanel").scrollIntoView({ behavior: 'smooth' });
 }
 
-async function triggerDeleteCard(taskId) {
-  // cadangan fungsi
-}
-
 async function triggerDeleteTask(taskId) {
   const confirmDelete = confirm("Yakin ingin menghapus tugas ini?");
   if (!confirmDelete) return;
@@ -755,12 +835,11 @@ async function triggerDeleteTask(taskId) {
   try {
     document.body.style.cursor = "wait";
     await deleteDoc(doc(db, "tasks", taskId));
-    msg("Tugas berhasil dihapus.", false);
+    showToast("Tugas berhasil dihapus.");
     await loadTasks();
-    if (currentRole === "admin") await loadAdminDashboard();
-    setTimeout(() => { $("message").style.display = "none"; }, 3000);
+    if (currentCardCount = currentRole === "admin") await loadAdminDashboard();
   } catch (error) {
-    msg("Gagal menghapus tugas: " + error.message, true);
+    showToast("Gagal menghapus tugas: " + error.message, true);
   } finally {
     document.body.style.cursor = "default";
   }
