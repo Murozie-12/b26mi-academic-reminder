@@ -98,7 +98,9 @@ function showCourses(){
 showCourses();
 
 if (!isConfigured) {
-  $("#loginBtn").addEventListener("click", async () => {
+$("#loginBtn").addEventListener("click", async () => {
+  alert("Tombol login berhasil ditekan");
+
   const provider = new GoogleAuthProvider();
 
   try {
@@ -107,8 +109,8 @@ if (!isConfigured) {
     console.error("Login gagal:", e);
     msg("Login gagal: " + e.code + " | " + e.message, true);
   }
-});
   });
+  
   $("logoutBtn").addEventListener("click",()=>signOut(auth));
   $("refreshBtn").addEventListener("click",loadTasks);
   onAuthStateChanged(auth, async user=>{
