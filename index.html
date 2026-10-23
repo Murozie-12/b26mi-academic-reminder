@@ -213,20 +213,11 @@ let currentRole = "mahasiswa";
 function showCourses() {
   $("courseSelect").innerHTML = courses
     .map((course, i) =>
-      `<option value="${i + 1}">${course}</option>`
-    )
-    .join("");
-
-  $("coursesList").innerHTML = courses
-    .map((course, i) =>
-      `<div class="card">
-        <span class="pill">MK ${i + 1}</span>
-        <p>${course}</p>
-      </div>`
+      `<option value="${i + 1}">${escapeHtml(course)}</option>`
     )
     .join("");
 }
-
+  
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, char => ({
     "&": "&amp;",
@@ -590,27 +581,21 @@ async function loadAdminDashboard() {
     }));
 
     $("taskCount").textContent = tasks.length;
+    
+// Ambil progres milik pengguna yang sedang login.
+const progressQuery = query(
+  collection(db, "task_progress"),
+  where("userId", "==", currentUser.uid)
+);
 
-    // Ambil progres berdasarkan peran akun.
-    let progressQuery;
+const progressSnap = await getDocs(progressQuery);
 
-    if (currentRole === "admin") {
-      progressQuery = collection(db, "task_progress");
-    } else {
-      progressQuery = query(
-        collection(db, "task_progress"),
-        where("userId", "==", currentUser.uid)
-      );
-    }
-
-    const progressSnap = await getDocs(progressQuery);
-
-    const myProgress = new Map(
-      progressSnap.docs.map(item => [
-        item.data().taskId,
-        item.data()
-      ])
-    );
+const myProgress = new Map(
+  progressSnap.docs.map(item => [
+    item.data().taskId,
+    item.data()
+  ])
+);
 
     // Hitung jumlah tugas yang selesai.
     $("doneCount").textContent = [
@@ -763,7 +748,11 @@ async function updateProgress(taskId, oldStatus) {
       }
     );
 
-    await loadTasks();
+  await loadTasks();
+
+if (currentRole === "admin") {
+  await loadAdminDashboard();
+}
 
   } catch (error) {
     console.error("Gagal memperbarui progres:", error);
