@@ -203,36 +203,24 @@ if (!isConfigured) {
     // 4. LOGIN GOOGLE
     // ====================================
 
-    $("loginBtn").addEventListener("click", async () => {
-      const provider = new GoogleAuthProvider();
+$("loginBtn").addEventListener("click", async () => {
+  const provider = new GoogleAuthProvider();
 
-      try {
-        await signInWithRedirect(auth, provider);
-      } catch (error) {
-        console.error("Login gagal:", error);
+  try {
+    await signInWithPopup(auth, provider);
+    msg("Login Google berhasil!", false);
+  } catch (error) {
+    console.error("Login gagal:", error);
 
-        msg(
-          "Login gagal: " +
-          (error.code || "unknown") +
-          " | " +
-          error.message,
-          true
-        );
-      }
-    });
-
-    // Periksa hasil redirect jika tersedia.
-    getRedirectResult(auth).catch(error => {
-      console.error("Hasil redirect:", error);
-
-      msg(
-        "Proses login Google bermasalah: " +
-        (error.code || "unknown") +
-        " | " +
-        error.message,
-        true
-      );
-    });
+    msg(
+      "Login gagal: " +
+      (error.code || "unknown") +
+      " | " +
+      error.message,
+      true
+    );
+  }
+});
 
     // ====================================
     // 5. LOGOUT DAN MUAT ULANG
