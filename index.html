@@ -365,8 +365,12 @@ if (!userSnap.exists()) {
   "hidden",
   currentRole !== "admin"
 );
+        
+await loadTasks();
 
-        await loadTasks();
+if (currentRole === "admin") {
+  await loadAdminDashboard();
+}
 
       } catch (error) {
         console.error("Gagal membaca profil:", error);
@@ -435,10 +439,6 @@ if (currentRole === "admin") {
   }
 }
 
-
-// ========================================
-// 8. MEMUAT DAFTAR TUGAS DAN PROGRES
-// ========================================
 // ========================================
 // DASHBOARD ADMIN
 // ========================================
@@ -449,7 +449,7 @@ async function loadAdminDashboard() {
   }
 
   try {
-    // Ambil data mahasiswa
+    // 1. Ambil daftar mahasiswa
     const usersSnap = await getDocs(
       collection(db, "users")
     );
@@ -460,7 +460,7 @@ async function loadAdminDashboard() {
 
     $("adminStudentCount").textContent = students.length;
 
-    // Ambil seluruh tugas
+    // 2. Ambil daftar tugas
     const tasksSnap = await getDocs(
       collection(db, "tasks")
     );
@@ -472,7 +472,7 @@ async function loadAdminDashboard() {
 
     $("adminTaskCount").textContent = tasks.length;
 
-    // Ambil seluruh progres mahasiswa
+    // 3. Ambil seluruh progres
     const progressSnap = await getDocs(
       collection(db, "task_progress")
     );
@@ -482,10 +482,13 @@ async function loadAdminDashboard() {
       ...item.data()
     }));
 
+    // Hanya hitung progres milik mahasiswa yang terdaftar
+    const studentIds = new Set(
+      students.map(student => student.id)
+    );
+
     const validProgress = progressDocs.filter(
-      progress => students.some(
-        student => student.id === progress.userId
-      )
+      progress => studentIds.has(progress.userId)
     );
 
     const completed = validProgress.filter(
@@ -496,20 +499,20 @@ async function loadAdminDashboard() {
       progress => progress.status === "dikerjakan"
     ).length;
 
-    // Setiap mahasiswa memiliki satu progres per tugas.
-    // Progres yang belum dibuat dihitung sebagai belum dikerjakan.
+    // Asumsi: semua tugas berlaku untuk semua mahasiswa.
+    // Hitung pasangan mahasiswa-tugas yang belum selesai dikerjakan.
     const totalExpected = students.length * tasks.length;
 
-    const adminTodo = Math.max(
+    const todo = Math.max(
       0,
       totalExpected - completed - doing
     );
 
     $("adminDoneCount").textContent = completed;
     $("adminDoingCount").textContent = doing;
-    $("adminTodoCount").textContent = adminTodo;
+    $("adminTodoCount").textContent = todo;
 
-    // Tampilkan progres mahasiswa
+    // 4. Siapkan data untuk tabel progres
     const studentMap = new Map(
       students.map(student => [
         student.id,
@@ -523,6 +526,7 @@ async function loadAdminDashboard() {
       tasks.map(task => [task.id, task])
     );
 
+    // Tampilkan progres yang sudah memiliki dokumen
     $("adminProgressList").innerHTML =
       validProgress.length
         ? validProgress.map(progress => {
@@ -564,7 +568,10 @@ async function loadAdminDashboard() {
       true
     );
   }
-              }
+        }
+// ========================================
+// 8. MEMUAT DAFTAR TUGAS DAN PROGRES
+// ========================================
   async function loadTasks() {
   if (!db || !currentUser) return;
 
