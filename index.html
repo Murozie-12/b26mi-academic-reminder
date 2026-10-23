@@ -73,6 +73,16 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
       <section class="card"><div class="muted">Peran akun</div><h2 id="roleLabel">Mahasiswa</h2><span id="rolePill" class="pill">mahasiswa</span></section>
     </div>
 
+    <!-- PANEL JADWAL KULIAH & ZOOM (FITUR BARU OPSI C) -->
+    <section class="card">
+      <div class="actions" style="justify-content:space-between; margin-bottom: 12px;">
+        <h2>📅 Jadwal Kuliah & Link Zoom</h2>
+      </div>
+      <div id="scheduleList">
+        <p class="muted">Memuat jadwal…</p>
+      </div>
+    </section>
+
     <!-- DASHBOARD ADMIN -->
     <section id="adminDashboard" class="card hidden">
       <h2>Dashboard Admin</h2>
@@ -125,7 +135,6 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
           </div>
         </div>
 
-        <!-- FITUR BARU (OPSI B): Pilihan Target Tugas -->
         <div class="formgrid" style="margin-top: 10px;">
           <div>
             <label>Target Ditujukan Untuk</label>
@@ -140,6 +149,28 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
         <textarea id="taskDescription" rows="2" maxlength="2000" placeholder="Petunjuk pengerjaan, format pengumpulan, dan lain-lain"></textarea>
         <button type="submit" id="submitTaskBtn" style="margin-top: 10px;">Simpan tugas</button>
       </form>
+
+      <!-- FORM TAMBAH JADWAL KULIAH (KHUSUS ADMIN) -->
+      <hr style="border:0; border-top:1px solid var(--line); margin: 24px 0;">
+      <h2>Panel Admin — Tambahkan Jadwal & Link Zoom</h2>
+      <form id="scheduleForm">
+        <div class="formgrid">
+          <div>
+            <label>Mata Kuliah</label>
+            <select id="scheduleCourseSelect" required></select>
+          </div>
+          <div>
+            <label>Hari & Jam</label>
+            <input id="scheduleTime" required placeholder="Contoh: Senin, 08:00 WIB">
+          </div>
+          <div>
+            <label>Link Zoom / GMeet / Daring</label>
+            <input id="scheduleLink" type="url" required placeholder="https://zoom.us/j/...">
+          </div>
+        </div>
+        <button type="submit" style="margin-top: 10px; background: var(--green);">Simpan Jadwal Kuliah</button>
+      </form>
+
     </section>
 
     <!-- DAFTAR TUGAS -->
@@ -199,8 +230,9 @@ let editingTaskId = null;
 let allTasksData = [];
 
 function showCourses() {
-  $("courseSelect").innerHTML = courses
-    .map((course, i) => `<option value="${i + 1}">${escapeHtml(course)}</option>`).join("");
+  const optionsHtml = courses.map((course, i) => `<option value="${i + 1}">${escapeHtml(course)}</option>`).join("");
+  $("courseSelect").innerHTML = optionsHtml;
+  $("scheduleCourseSelect").innerHTML = optionsHtml;
 }
   
 function escapeHtml(value) {
@@ -259,7 +291,10 @@ if (!isConfigured) {
       catch (error) { msg("Gagal logout: " + error.message, true); }
     });
 
-    $("refreshBtn").addEventListener("click", loadTasks);
+    $("refreshBtn").addEventListener("click", () => {
+      loadTasks();
+      loadSchedules();
+    });
 
     onAuthStateChanged(auth, async user => {
       currentUser = user;
@@ -289,13 +324,14 @@ if (!isConfigured) {
         $("adminDashboard").classList.toggle("hidden", currentRole !== "admin");
         
         await loadTasks();
+        await loadSchedules();
         if (currentRole === "admin") await loadAdminDashboard();
       } catch (error) {
         msg("Login berhasil, tetapi profil database gagal dibaca: " + error.message, true);
       }
     });
 
-    // Submit Tugas (Tambah/Edit dengan Target)
+    // Submit Tugas
     $("taskForm").addEventListener("submit", async event => {
       event.preventDefault();
       if (!currentUser || currentRole !== "admin") return;
@@ -309,7 +345,7 @@ if (!isConfigured) {
           title: $("taskTitle").value.trim(),
           courseId: $("courseSelect").value,
           type: $("taskType").value,
-          target: $("taskTarget").value, // Menyimpan target tugas (semua/kelompok)
+          target: $("taskTarget").value,
           dueAt: new Date($("dueAt").value),
           description: $("taskDescription").value.trim()
         };
@@ -333,6 +369,28 @@ if (!isConfigured) {
         msg("Gagal menyimpan tugas: " + error.message, true);
         $("submitTaskBtn").disabled = false;
         $("submitTaskBtn").textContent = editingTaskId ? "Update Tugas" : "Simpan tugas";
+      }
+    });
+
+    // FITUR BARU (OPSI C): Submit Jadwal Kuliah oleh Admin
+    $("scheduleForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!currentUser || currentRole !== "admin") return;
+
+      try {
+        await addDoc(collection(db, "schedules"), {
+          courseId: $("scheduleCourseSelect").value,
+          timeText: $("scheduleTime").value.trim(),
+          zoomLink: $("scheduleLink").value.trim(),
+          createdAt: serverTimestamp()
+        });
+
+        event.target.reset();
+        msg("Jadwal kuliah berhasil ditambahkan.", false);
+        await loadSchedules();
+        setTimeout(() => { $("message").style.display = "none"; }, 3000);
+      } catch (error) {
+        msg("Gagal menyimpan jadwal: " + error.message, true);
       }
     });
 
@@ -399,7 +457,7 @@ async function loadAdminDashboard() {
               <h3 style="margin-bottom:4px;">${escapeHtml(studentName)}</h3>
               <p style="margin:0 0 8px;">${escapeHtml(taskTitle)}</p>
               <span class="status" style="background:#f1f5f9; padding:4px 8px; border-radius:6px; display:inline-block;">
-                ${statusIcon} ${escapeHtml(statusText)}
+                  ${statusIcon} ${escapeHtml(statusText)}
               </span>
             </article>
           `;
@@ -407,6 +465,58 @@ async function loadAdminDashboard() {
       : "<p class='muted'>Belum ada progres mahasiswa.</p>";
   } catch (error) {
     msg("Dashboard Admin gagal dimuat: " + error.message, true);
+  }
+}
+
+// ========================================
+// MEMUAT JADWAL KULIAH & LINK ZOOM (OPSI C)
+// ========================================
+async function loadSchedules() {
+  if (!db || !currentUser) return;
+
+  try {
+    const schedSnap = await getDocs(collection(db, "schedules"));
+    const schedules = schedSnap.docs.map(item => ({ id: item.id, ...item.data() }));
+
+    const deleteBtnHtml = (id) => currentRole === "admin" ? `<button class="danger" data-delete-sched="${id}" style="padding: 4px 8px; font-size: 0.75rem; margin-top: 6px;">Hapus</button>` : "";
+
+    $("scheduleList").innerHTML = schedules.length
+      ? `<div class="row">` + schedules.map(sched => {
+          const courseName = courses[Number(sched.courseId) - 1] || "Mata kuliah";
+          return `
+            <div class="card" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between;">
+              <div>
+                <span class="pill" style="background:#eef2ff; color:var(--blue); margin-bottom:6px;">${escapeHtml(sched.timeText || "Waktu belum diatur")}</span>
+                <h3 style="font-size:1rem; margin: 4px 0 8px;">${escapeHtml(courseName)}</h3>
+              </div>
+              <div>
+                <a href="${escapeHtml(sched.zoomLink)}" target="_blank" style="display:inline-block; background:var(--green); color:white; padding:6px 12px; border-radius:8px; text-decoration:none; font-size:0.85rem; font-weight:600;">
+                  📹 Gabung Kelas (Zoom)
+                </a>
+                ${deleteBtnHtml(sched.id)}
+              </div>
+            </div>
+          `;
+        }).join("") + `</div>`
+      : "<p class='muted'>Belum ada jadwal kuliah yang ditambahkan oleh admin.</p>";
+
+    if (currentRole === "admin") {
+      document.querySelectorAll("[data-delete-sched]").forEach(btn => {
+        btn.onclick = () => deleteSchedule(btn.dataset.deleteSched);
+      });
+    }
+  } catch (error) {
+    console.error("Gagal memuat jadwal:", error);
+  }
+}
+
+async function deleteSchedule(schedId) {
+  if (!confirm("Hapus jadwal ini?")) return;
+  try {
+    await deleteDoc(doc(db, "schedules", schedId));
+    loadSchedules();
+  } catch (error) {
+    msg("Gagal menghapus jadwal: " + error.message, true);
   }
 }
 
@@ -441,9 +551,8 @@ async function loadTasks() {
           const course = courses[Number(task.courseId) - 1] || "Mata kuliah";
           const filterCategoryClass = status === "selesai" ? "task-done" : "task-active";
 
-          // Badge Target Tugas
           const targetBadge = task.target === "kelompok" 
-            ? `<span class="pill" style=style="background:#fef3c7; color:#92400e;">👥 Kelompok</span>` 
+            ? `<span class="pill" style="background:#fef3c7; color:#92400e;">👥 Kelompok</span>` 
             : `<span class="pill" style="background:#e0f2fe; color:#0369a1;">🌐 Semua</span>`;
 
           const adminControls = currentRole === "admin" ? `
@@ -545,7 +654,7 @@ function triggerEditTask(taskId) {
   $("taskTitle").value = task.title || "";
   $("courseSelect").value = task.courseId || "1";
   $("taskType").value = task.type || "individu";
-  $("taskTarget").value = task.target || "semua"; // Mengisi ulang target saat edit
+  $("taskTarget").value = task.target || "semua";
   $("taskDescription").value = task.description || "";
 
   if (task.dueAt) {
