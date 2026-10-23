@@ -18,7 +18,6 @@ h2{font-size:1.05rem;margin:0 0 12px}
 .muted{color:var(--muted);font-size:.92rem}
 .pill{display:inline-block;border-radius:999px;padding:4px 9px;font-size:.8rem;background:#eef3ff;color:#214db8}
 
-/* Styling Form & Tombol dengan efek Hover/Focus */
 button,input,select,textarea{font:inherit; transition: all 0.2s ease;}
 button{border:0;border-radius:10px;background:var(--blue);color:#fff;padding:10px 13px;cursor:pointer;font-weight:600}
 button.secondary{background:#e9eef7;color:#1f2a44}
@@ -34,7 +33,6 @@ label{font-size:.88rem;font-weight:600;display:block}
 .formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
 .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
-/* Styling Kartu Tugas */
 .task{border:1px solid var(--line);border-radius:12px;padding:16px;margin:9px 0;background:#fff; transition: box-shadow 0.2s ease;}
 .task:hover{box-shadow: 0 4px 12px rgba(29, 53, 87, 0.08);}
 .task h3{margin:0 0 6px;font-size:1.1rem}
@@ -47,7 +45,6 @@ label{font-size:.88rem;font-weight:600;display:block}
 .hidden{display:none!important}
 footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
 
-/* Logika CSS untuk Filter */
 #tasksList.show-active-only .task-done { display: none !important; }
 #tasksList.show-done-only .task-active { display: none !important; }
 </style>
@@ -95,13 +92,12 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
 
     <!-- PANEL TAMBAH/EDIT TUGAS ADMIN -->
     <section id="adminPanel" class="card hidden">
-      <!-- FITUR BARU: Header Dinamis untuk Mode Edit -->
       <div style="display:flex; justify-content:space-between; align-items:center;">
         <h2 id="formTitle">Panel Admin — Tambahkan tugas</h2>
         <button id="cancelEditBtn" class="secondary hidden" style="padding: 6px 12px; font-size: 0.8rem;">Batal Edit</button>
       </div>
       
-      <p class="muted">Hanya akun yang sudah ditetapkan sebagai Admin di Firestore yang boleh mengelola tugas.</p>
+      <p class="muted">Hanya akun admin yang boleh mengelola tugas.</p>
       <form id="taskForm">
         <div class="formgrid">
           <div>
@@ -128,9 +124,21 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
             <input id="dueAt" type="datetime-local" required>
           </div>
         </div>
-        <label>Instruksi / catatan</label>
+
+        <!-- FITUR BARU (OPSI B): Pilihan Target Tugas -->
+        <div class="formgrid" style="margin-top: 10px;">
+          <div>
+            <label>Target Ditujukan Untuk</label>
+            <select id="taskTarget">
+              <option value="semua">🌐 Semua Mahasiswa (Publik)</option>
+              <option value="kelompok">👥 Khusus Tugas Kelompok</option>
+            </select>
+          </div>
+        </div>
+
+        <label style="margin-top: 10px;">Instruksi / catatan</label>
         <textarea id="taskDescription" rows="2" maxlength="2000" placeholder="Petunjuk pengerjaan, format pengumpulan, dan lain-lain"></textarea>
-        <button type="submit" id="submitTaskBtn">Simpan tugas</button>
+        <button type="submit" id="submitTaskBtn" style="margin-top: 10px;">Simpan tugas</button>
       </form>
     </section>
 
@@ -156,27 +164,10 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
 <footer>B26MI — Academic Reminder · Versi starter</footer>
 
 <script type="module">
-import {
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, where, serverTimestamp, doc, getDoc, setDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
-import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithPopup,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-
-// FITUR BARU: Menambahkan deleteDoc dan updateDoc
-import {
-  getFirestore, collection, addDoc, getDocs, query, orderBy, where, 
-  serverTimestamp, doc, getDoc, setDoc, deleteDoc, updateDoc
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-
-// ========================================
-// 1. KONFIGURASI FIREBASE
-// ========================================
 const firebaseConfig = {
   apiKey: "AIzaSyBsVOWrSKNO42A3vJ_baQNs1QoLhiBt3M0",
   authDomain: "b26mi-academic-reminder.firebaseapp.com",
@@ -186,9 +177,6 @@ const firebaseConfig = {
   appId: "1:739552881698:web:c9e5d290e4e4c4a723ee7b"
 };
   
-// ========================================
-// 2. VARIABEL DAN FUNGSI DASAR
-// ========================================
 const $ = id => document.getElementById(id);
 const msg = (text, warn = false) => {
   $("message").style.display = "block";
@@ -207,10 +195,8 @@ let auth = null;
 let db = null;
 let currentUser = null;
 let currentRole = "mahasiswa";
-
-// Variabel untuk menyimpan State (Kondisi) Edit Tugas
 let editingTaskId = null;
-let allTasksData = []; // Menyimpan data tugas untuk ditarik ke form edit
+let allTasksData = [];
 
 function showCourses() {
   $("courseSelect").innerHTML = courses
@@ -238,7 +224,6 @@ function getDeadlineInfo(due) {
 
 showCourses();
 
-// Filter Cepat
 document.querySelectorAll(".filter-btn").forEach(btn => {
   btn.addEventListener("click", e => {
     document.querySelectorAll(".filter-btn").forEach(b => b.classList.add("secondary"));
@@ -251,9 +236,6 @@ document.querySelectorAll(".filter-btn").forEach(btn => {
   });
 });
 
-// ========================================
-// 3. VALIDASI DAN INISIALISASI FIREBASE
-// ========================================
 const isConfigured = Boolean(firebaseConfig.apiKey) && !firebaseConfig.apiKey.startsWith("GANTI_");
 
 if (!isConfigured) {
@@ -313,9 +295,7 @@ if (!isConfigured) {
       }
     });
 
-    // ====================================
-    // 7. TAMBAH & EDIT TUGAS (ADMIN)
-    // ====================================
+    // Submit Tugas (Tambah/Edit dengan Target)
     $("taskForm").addEventListener("submit", async event => {
       event.preventDefault();
       if (!currentUser || currentRole !== "admin") return;
@@ -325,34 +305,29 @@ if (!isConfigured) {
         btn.disabled = true;
         btn.textContent = "Menyimpan...";
 
-        // Siapkan data tugas dari form
         const taskData = {
           title: $("taskTitle").value.trim(),
           courseId: $("courseSelect").value,
           type: $("taskType").value,
+          target: $("taskTarget").value, // Menyimpan target tugas (semua/kelompok)
           dueAt: new Date($("dueAt").value),
           description: $("taskDescription").value.trim()
         };
 
         if (editingTaskId) {
-          // Logika Update (Edit)
           taskData.updatedAt = serverTimestamp();
           await updateDoc(doc(db, "tasks", editingTaskId), taskData);
           msg("Tugas berhasil diperbarui.", false);
         } else {
-          // Logika Create (Tambah Baru)
           taskData.createdBy = currentUser.uid;
           taskData.createdAt = serverTimestamp();
           await addDoc(collection(db, "tasks"), taskData);
           msg("Tugas baru berhasil disimpan.", false);
         }
 
-        // Reset form dan matikan mode Edit
         resetFormToTambah();
-        
         await loadTasks();
         if (currentRole === "admin") await loadAdminDashboard();
-
         setTimeout(() => { $("message").style.display = "none"; }, 3000);
       } catch (error) {
         msg("Gagal menyimpan tugas: " + error.message, true);
@@ -361,7 +336,6 @@ if (!isConfigured) {
       }
     });
 
-    // Tombol Batal Edit
     $("cancelEditBtn").addEventListener("click", (e) => {
       e.preventDefault();
       resetFormToTambah();
@@ -373,7 +347,6 @@ if (!isConfigured) {
   }
 }
 
-// Fungsi bantu untuk mengembalikan Form ke mode "Tambah Baru"
 function resetFormToTambah() {
   $("taskForm").reset();
   editingTaskId = null;
@@ -383,9 +356,6 @@ function resetFormToTambah() {
   $("cancelEditBtn").classList.add("hidden");
 }
 
-// ========================================
-// DASHBOARD ADMIN (Tetap sama)
-// ========================================
 async function loadAdminDashboard() {
   if (!db || !currentUser || currentRole !== "admin") return;
   try {
@@ -440,9 +410,6 @@ async function loadAdminDashboard() {
   }
 }
 
-// ========================================
-// 8. MEMUAT DAFTAR TUGAS DAN PROGRES
-// ========================================
 async function loadTasks() {
   if (!db || !currentUser) return;
 
@@ -450,9 +417,7 @@ async function loadTasks() {
     const taskSnap = await getDocs(query(collection(db, "tasks"), orderBy("dueAt", "asc")));
     const tasks = taskSnap.docs.map(item => ({ id: item.id, ...item.data() }));
     
-    // Simpan semua tugas ke variabel global untuk keperluan Edit
     allTasksData = tasks;
-    
     $("taskCount").textContent = tasks.length;
     
     const progressQuery = query(collection(db, "task_progress"), where("userId", "==", currentUser.uid));
@@ -476,7 +441,11 @@ async function loadTasks() {
           const course = courses[Number(task.courseId) - 1] || "Mata kuliah";
           const filterCategoryClass = status === "selesai" ? "task-done" : "task-active";
 
-          // FITUR BARU: Tombol Admin (Edit/Hapus) di render secara kondisional
+          // Badge Target Tugas
+          const targetBadge = task.target === "kelompok" 
+            ? `<span class="pill" style=style="background:#fef3c7; color:#92400e;">👥 Kelompok</span>` 
+            : `<span class="pill" style="background:#e0f2fe; color:#0369a1;">🌐 Semua</span>`;
+
           const adminControls = currentRole === "admin" ? `
             <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); display:flex; gap: 8px;">
                <button class="secondary" data-edit="${escapeHtml(task.id)}" style="padding: 6px 12px; font-size: 0.85rem;">✏️ Edit</button>
@@ -492,6 +461,7 @@ async function loadTasks() {
                   <div class="muted" style="margin-bottom: 8px;">
                     <span class="pill" style="background:#f1f5f9; color:var(--muted)">${escapeHtml(course)}</span> 
                     <span class="pill" style="background:#f1f5f9; color:var(--muted)">${escapeHtml(task.type || "tugas")}</span>
+                    ${targetBadge}
                   </div>
                 </div>
               </div>
@@ -521,12 +491,10 @@ async function loadTasks() {
         }).join("")
       : "<p class='muted'>Hore! Belum ada tugas saat ini.</p>";
 
-    // Memasang Event Listener untuk Ubah Progres
     document.querySelectorAll("[data-progress]").forEach(button => {
       button.onclick = () => updateProgress(button.dataset.progress, button.dataset.status);
     });
 
-    // Memasang Event Listener untuk Fitur Admin
     if (currentRole === "admin") {
       document.querySelectorAll("[data-edit]").forEach(btn => {
         btn.onclick = () => triggerEditTask(btn.dataset.edit);
@@ -541,9 +509,6 @@ async function loadTasks() {
   }
 }
   
-// ========================================
-// 9. MEMPERBARUI PROGRES TUGAS
-// ========================================
 async function updateProgress(taskId, oldStatus) {
   if (!currentUser || !db) return;
   let nextStatus = "belum";
@@ -568,11 +533,7 @@ async function updateProgress(taskId, oldStatus) {
   }
 }
 
-// ========================================
-// FITUR BARU: Fungsi Edit dan Hapus Tugas
-// ========================================
 function triggerEditTask(taskId) {
-  // Cari data tugas berdasarkan ID dari memori lokal (allTasksData)
   const task = allTasksData.find(t => t.id === taskId);
   if (!task) return;
 
@@ -581,40 +542,34 @@ function triggerEditTask(taskId) {
   $("submitTaskBtn").textContent = "Update Tugas";
   $("cancelEditBtn").classList.remove("hidden");
 
-  // Mengisi form dengan data lama
   $("taskTitle").value = task.title || "";
   $("courseSelect").value = task.courseId || "1";
   $("taskType").value = task.type || "individu";
+  $("taskTarget").value = task.target || "semua"; // Mengisi ulang target saat edit
   $("taskDescription").value = task.description || "";
 
-  // Konversi format tanggal Firestore (Timestamp) ke format input datetime-local (YYYY-MM-DDThh:mm)
   if (task.dueAt) {
     const d = task.dueAt.toDate ? task.dueAt.toDate() : new Date(task.dueAt);
     if (!isNaN(d.getTime())) {
-      const tzOffset = d.getTimezoneOffset() * 60000; // Menyesuaikan zona waktu lokal (WIB/WIT/WITA)
+      const tzOffset = d.getTimezoneOffset() * 60000;
       const localISOTime = (new Date(d.getTime() - tzOffset)).toISOString().slice(0, 16);
       $("dueAt").value = localISOTime;
     }
   }
 
-  // Scroll layar ke panel Form
   $("adminPanel").scrollIntoView({ behavior: 'smooth' });
 }
 
 async function triggerDeleteTask(taskId) {
-  // Munculkan Pop Up Konfirmasi
-  const confirmDelete = confirm("Yakin ingin menghapus tugas ini? Aksi ini tidak dapat dibatalkan.");
+  const confirmDelete = confirm("Yakin ingin menghapus tugas ini?");
   if (!confirmDelete) return;
 
   try {
     document.body.style.cursor = "wait";
     await deleteDoc(doc(db, "tasks", taskId));
-    
     msg("Tugas berhasil dihapus.", false);
-    
     await loadTasks();
     if (currentRole === "admin") await loadAdminDashboard();
-    
     setTimeout(() => { $("message").style.display = "none"; }, 3000);
   } catch (error) {
     msg("Gagal menghapus tugas: " + error.message, true);
@@ -622,7 +577,6 @@ async function triggerDeleteTask(taskId) {
     document.body.style.cursor = "default";
   }
 }
-
 </script>
 </body>
 </html>
