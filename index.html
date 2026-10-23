@@ -259,13 +259,21 @@ $("loginBtn").addEventListener("click", async () => {
       }
 
       try {
-        const userSnap = await getDoc(
-          doc(db, "users", user.uid)
-        );
+        const userRef = doc(db, "users", user.uid);
+const userSnap = await getDoc(userRef);
 
-        currentRole = userSnap.exists()
-          ? (userSnap.data().role || "mahasiswa")
-          : "mahasiswa";
+if (!userSnap.exists()) {
+  await setDoc(userRef, {
+    displayName: user.displayName || "Mahasiswa",
+    email: user.email || "",
+    role: "mahasiswa",
+    createdAt: serverTimestamp()
+  });
+
+  currentRole = "mahasiswa";
+} else {
+  currentRole = userSnap.data().role || "mahasiswa";
+}
 
         $("roleLabel").textContent =
           currentRole === "admin"
