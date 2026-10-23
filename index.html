@@ -4,58 +4,116 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>B26MI — Academic Reminder</title>
+<!-- Memuat Google Font: Plus Jakarta Sans untuk tampilan modern -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#64748b;--blue:#2457d6;--green:#16834a;--amber:#a86400;--red:#b42318;--line:#e4eaf2}
+/* Variabel Warna Mode Terang (Default) */
+:root {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --blue: #2563eb;
+  --blue-hover: #1d4ed8;
+  --green: #16a34a;
+  --amber: #d97706;
+  --red: #dc2626;
+  --line: #e2e8f0;
+  --card-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+  --header-bg: #0f172a;
+}
+
+/* Variabel Warna Mode Gelap (Dark Mode) */
+[data-theme="dark"] {
+  --bg: #0b0f19;
+  --card: #131c2e;
+  --ink: #f8fafc;
+  --muted: #94a3b8;
+  --blue: #3b82f6;
+  --blue-hover: #60a5fa;
+  --green: #22c55e;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --line: #1e293b;
+  --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3);
+  --header-bg: #090e17;
+}
+
 *{box-sizing:border-box}
-body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
-header{background:#14264b;color:#fff;padding:18px 16px}
-header h1{font-size:1.2rem;margin:0 0 4px}
-header p{margin:0;color:#d7e2ff;font-size:.9rem}
-main{max-width:1050px;margin:auto;padding:16px}
-.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 2px 8px #1d35570a;margin-bottom:12px}
-h2{font-size:1.05rem;margin:0 0 12px}
-.muted{color:var(--muted);font-size:.92rem}
-.pill{display:inline-block;border-radius:999px;padding:4px 9px;font-size:.8rem;background:#eef3ff;color:#214db8}
+body{margin:0;font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--ink);transition: background 0.3s ease, color 0.3s ease;}
+
+header{background:var(--header-bg);color:#fff;padding:20px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1);}
+header h1{font-size:1.25rem;margin:0 0 4px; font-weight: 700;}
+header p{margin:0;color:#94a3b8;font-size:.875rem}
+
+main{max-width:1050px;margin:auto;padding:20px 16px;}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:var(--card-shadow);margin-bottom:16px; transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;}
+h2{font-size:1.1rem;margin:0 0 12px; font-weight: 600;}
+.muted{color:var(--muted);font-size:.9rem}
+.pill{display:inline-block;border-radius:999px;padding:5px 12px;font-size:.75rem;font-weight:600;background:rgba(37, 99, 235, 0.1);color:var(--blue)}
 
 button,input,select,textarea{font:inherit; transition: all 0.2s ease;}
-button{border:0;border-radius:10px;background:var(--blue);color:#fff;padding:10px 13px;cursor:pointer;font-weight:600}
-button.secondary{background:#e9eef7;color:#1f2a44}
-button.danger{background:#fff0ee;color:var(--red)}
+button{border:0;border-radius:12px;background:var(--blue);color:#fff;padding:10px 16px;cursor:pointer;font-weight:600; font-size: 0.9rem;}
+button.secondary{background:var(--line);color:var(--ink)}
+button.danger{background:rgba(220, 38, 38, 0.1);color:var(--red)}
 button:disabled{opacity:.5;cursor:not-allowed}
-button:hover:not(:disabled) {filter: brightness(0.95); transform: translateY(-1px);}
+button:hover:not(:disabled) {filter: brightness(1.05); transform: translateY(-1px);}
 button:active:not(:disabled) {transform: translateY(0);}
 
-input,select,textarea{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:9px;background:white;color:var(--ink);margin:5px 0 10px}
-input:focus, select:focus, textarea:focus {border-color: var(--blue); outline: none; box-shadow: 0 0 0 3px rgba(36, 87, 214, 0.15);}
+input,select,textarea{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);margin:6px 0 12px; font-size: 0.9rem;}
+input:focus, select:focus, textarea:focus {border-color: var(--blue); outline: none; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);}
 
-label{font-size:.88rem;font-weight:600;display:block}
-.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+label{font-size:.85rem;font-weight:600;display:block; margin-bottom: 2px;}
+.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
 .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
-.task{border:1px solid var(--line);border-radius:12px;padding:16px;margin:9px 0;background:#fff; transition: box-shadow 0.2s ease;}
-.task:hover{box-shadow: 0 4px 12px rgba(29, 53, 87, 0.08);}
-.task h3{margin:0 0 6px;font-size:1.1rem}
+.task{border:1px solid var(--line);border-radius:16px;padding:18px;margin:12px 0;background:var(--card); transition: transform 0.2s ease, box-shadow 0.2s ease;}
+.task:hover{box-shadow: 0 6px 20px rgba(0,0,0,0.08); transform: translateY(-2px);}
+.task h3{margin:0 0 8px;font-size:1.1rem; font-weight: 600;}
 .status{font-size:.85rem;font-weight:700}
 .done{color:var(--green)}
 .doing{color:var(--amber)}
 .todo{color:var(--red)}
 
-.notice{padding:12px;border-radius:10px;background:#fff8e6;border:1px solid #f1d58b;color:#714d00;font-size:.9rem; margin-bottom: 12px;}
+.notice{padding:14px;border-radius:12px;background:rgba(245, 158, 11, 0.1);border:1px solid rgba(245, 158, 11, 0.3);color:var(--amber);font-size:.9rem; margin-bottom: 16px; font-weight: 500;}
 .hidden{display:none!important}
-footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
+footer{padding:30px;text-align:center;color:var(--muted);font-size:.85rem}
 
 #tasksList.show-active-only .task-done { display: none !important; }
 #tasksList.show-done-only .task-active { display: none !important; }
+
+/* Tombol Saklar Tema */
+.theme-toggle {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 99px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.theme-toggle:hover { background: rgba(255, 255, 255, 0.2); }
 </style>
 </head>
 <body>
 <header>
-  <h1>B26MI — Academic Reminder</h1>
-  <p>Pengingat tugas, presentasi, dan progres akademik</p>
+  <div>
+    <h1>B26MI — Academic Reminder</h1>
+    <p>Pengingat tugas, presentasi, dan progres akademik</p>
+  </div>
+  <!-- Tombol Toggle Dark/Light Mode -->
+  <button id="themeToggleBtn" class="theme-toggle">🌙 Mode Gelap</button>
 </header>
+
 <main>
-  <div id="message" class="notice">Sebelum digunakan kelas, admin harus mengisi konfigurasi Firebase dan menerapkan aturan Firestore yang aman.</div>
+  <div id="message" class="notice">Sebelum digunakan kelas, admin harus mengisi konfigurasi Firebase dan aturan Firestore yang aman.</div>
   
   <section class="card">
     <div class="actions" style="justify-content:space-between">
@@ -63,17 +121,17 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
       <button id="loginBtn">Masuk dengan Google</button>
       <button id="logoutBtn" class="secondary hidden">Keluar</button>
     </div>
-    <p class="muted">Starter awal. Setelah konfigurasi Firebase dan aturan keamanan dipasang, data dapat digunakan bersama oleh kelas.</p>
+    <p class="muted" style="margin-top: 8px; margin-bottom: 0;">Starter awal. Setelah konfigurasi Firebase dan aturan keamanan dipasang, data dapat digunakan bersama oleh kelas.</p>
   </section>
 
   <div id="appArea" class="hidden">
     <div class="row">
-      <section class="card"><div class="muted">Tugas terlihat</div><h2 id="taskCount">0</h2></section>
-      <section class="card"><div class="muted">Tugas selesai oleh saya</div><h2 id="doneCount">0</h2></section>
-      <section class="card"><div class="muted">Peran akun</div><h2 id="roleLabel">Mahasiswa</h2><span id="rolePill" class="pill">mahasiswa</span></section>
+      <section class="card"><div class="muted">Tugas terlihat</div><h2 id="taskCount" style="margin-top:4px;">0</h2></section>
+      <section class="card"><div class="muted">Tugas selesai oleh saya</div><h2 id="doneCount" style="margin-top:4px;">0</h2></section>
+      <section class="card"><div class="muted">Peran akun</div><h2 id="roleLabel" style="margin-top:4px;">Mahasiswa</h2><span id="rolePill" class="pill" style="margin-top:4px;">mahasiswa</span></section>
     </div>
 
-    <!-- PANEL JADWAL KULIAH & ZOOM (FITUR BARU OPSI C) -->
+    <!-- JADWAL KULIAH & LINK ZOOM -->
     <section class="card">
       <div class="actions" style="justify-content:space-between; margin-bottom: 12px;">
         <h2>📅 Jadwal Kuliah & Link Zoom</h2>
@@ -88,13 +146,13 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
       <h2>Dashboard Admin</h2>
       <p class="muted">Ringkasan aktivitas akademik mahasiswa.</p>
       <div class="row">
-        <div class="card"><div class="muted">Total mahasiswa</div><h2 id="adminStudentCount">0</h2></div>
-        <div class="card"><div class="muted">Total tugas</div><h2 id="adminTaskCount">0</h2></div>
-        <div class="card"><div class="muted">Progres selesai</div><h2 id="adminDoneCount">0</h2></div>
-        <div class="card"><div class="muted">Sedang dikerjakan</div><h2 id="adminDoingCount">0</h2></div>
-        <div class="card"><div class="muted">Belum dikerjakan</div><h2 id="adminTodoCount">0</h2></div>
+        <div class="card"><div class="muted">Total mahasiswa</div><h2 id="adminStudentCount" style="margin-top:4px;">0</h2></div>
+        <div class="card"><div class="muted">Total tugas</div><h2 id="adminTaskCount" style="margin-top:4px;">0</h2></div>
+        <div class="card"><div class="muted">Progres selesai</div><h2 id="adminDoneCount" style="margin-top:4px;">0</h2></div>
+        <div class="card"><div class="muted">Sedang dikerjakan</div><h2 id="adminDoingCount" style="margin-top:4px;">0</h2></div>
+        <div class="card"><div class="muted">Belum dikerjakan</div><h2 id="adminTodoCount" style="margin-top:4px;">0</h2></div>
       </div>
-      <h2>Progres Mahasiswa</h2>
+      <h2 style="margin-top: 20px;">Progres Mahasiswa</h2>
       <div id="adminProgressList">
         <p class="muted">Data progres akan ditampilkan di sini.</p>
       </div>
@@ -135,7 +193,7 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
           </div>
         </div>
 
-        <div class="formgrid" style="margin-top: 10px;">
+        <div class="formgrid" style="margin-top: 4px;">
           <div>
             <label>Target Ditujukan Untuk</label>
             <select id="taskTarget">
@@ -145,12 +203,11 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
           </div>
         </div>
 
-        <label style="margin-top: 10px;">Instruksi / catatan</label>
+        <label style="margin-top: 4px;">Instruksi / catatan</label>
         <textarea id="taskDescription" rows="2" maxlength="2000" placeholder="Petunjuk pengerjaan, format pengumpulan, dan lain-lain"></textarea>
-        <button type="submit" id="submitTaskBtn" style="margin-top: 10px;">Simpan tugas</button>
+        <button type="submit" id="submitTaskBtn" style="margin-top: 6px;">Simpan tugas</button>
       </form>
 
-      <!-- FORM TAMBAH JADWAL KULIAH (KHUSUS ADMIN) -->
       <hr style="border:0; border-top:1px solid var(--line); margin: 24px 0;">
       <h2>Panel Admin — Tambahkan Jadwal & Link Zoom</h2>
       <form id="scheduleForm">
@@ -164,13 +221,12 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
             <input id="scheduleTime" required placeholder="Contoh: Senin, 08:00 WIB">
           </div>
           <div>
-            <label>Link Zoom / GMeet / Daring</label>
+            <label>Link Zoom / GMeet</label>
             <input id="scheduleLink" type="url" required placeholder="https://zoom.us/j/...">
           </div>
         </div>
-        <button type="submit" style="margin-top: 10px; background: var(--green);">Simpan Jadwal Kuliah</button>
+        <button type="submit" style="margin-top: 6px; background: var(--green);">Simpan Jadwal Kuliah</button>
       </form>
-
     </section>
 
     <!-- DAFTAR TUGAS -->
@@ -192,7 +248,7 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
     </section>
   </div>
 </main>
-<footer>B26MI — Academic Reminder · Versi starter</footer>
+<footer>B26MI — Academic Reminder · Versi Elegan & Modern</footer>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
@@ -228,6 +284,30 @@ let currentUser = null;
 let currentRole = "mahasiswa";
 let editingTaskId = null;
 let allTasksData = [];
+
+// ========================================
+// LOGIKA DARK / LIGHT MODE
+// ========================================
+const themeToggleBtn = $("themeToggleBtn");
+const currentTheme = localStorage.getItem("theme") || "light";
+
+if (currentTheme === "dark") {
+  document.documentElement.setAttribute("data-theme", "dark");
+  themeToggleBtn.textContent = "☀️ Mode Terang";
+}
+
+themeToggleBtn.addEventListener("click", () => {
+  let theme = document.documentElement.getAttribute("data-theme");
+  if (theme === "dark") {
+    document.documentElement.removeAttribute("data-theme");
+    localStorage.setItem("theme", "light");
+    themeToggleBtn.textContent = "🌙 Mode Gelap";
+  } else {
+    document.documentElement.setAttribute("data-theme", "dark");
+    localStorage.setItem("theme", "dark");
+    themeToggleBtn.textContent = "☀️ Mode Terang";
+  }
+});
 
 function showCourses() {
   const optionsHtml = courses.map((course, i) => `<option value="${i + 1}">${escapeHtml(course)}</option>`).join("");
@@ -331,7 +411,6 @@ if (!isConfigured) {
       }
     });
 
-    // Submit Tugas
     $("taskForm").addEventListener("submit", async event => {
       event.preventDefault();
       if (!currentUser || currentRole !== "admin") return;
@@ -372,7 +451,6 @@ if (!isConfigured) {
       }
     });
 
-    // FITUR BARU (OPSI C): Submit Jadwal Kuliah oleh Admin
     $("scheduleForm").addEventListener("submit", async event => {
       event.preventDefault();
       if (!currentUser || currentRole !== "admin") return;
@@ -400,7 +478,7 @@ if (!isConfigured) {
     });
 
   } catch (error) {
-    $("loginBtn").disabled = true;
+        $("loginBtn").disabled = true;
     msg("Firebase gagal diinisialisasi: " + error.message, true);
   }
 }
@@ -454,10 +532,10 @@ async function loadAdminDashboard() {
           
           return `
             <article class="task">
-              <h3 style="margin-bottom:4px;">${escapeHtml(studentName)}</h3>
-              <p style="margin:0 0 8px;">${escapeHtml(taskTitle)}</p>
-              <span class="status" style="background:#f1f5f9; padding:4px 8px; border-radius:6px; display:inline-block;">
-                  ${statusIcon} ${escapeHtml(statusText)}
+              <h3 style="margin-bottom:4px; font-size:1rem;">${escapeHtml(studentName)}</h3>
+              <p style="margin:0 0 8px; font-size:0.9rem;">${escapeHtml(taskTitle)}</p>
+              <span class="status" style="background:var(--line); padding:4px 8px; border-radius:6px; display:inline-block;">
+                ${statusIcon} ${escapeHtml(statusText)}
               </span>
             </article>
           `;
@@ -468,9 +546,6 @@ async function loadAdminDashboard() {
   }
 }
 
-// ========================================
-// MEMUAT JADWAL KULIAH & LINK ZOOM (OPSI C)
-// ========================================
 async function loadSchedules() {
   if (!db || !currentUser) return;
 
@@ -478,19 +553,19 @@ async function loadSchedules() {
     const schedSnap = await getDocs(collection(db, "schedules"));
     const schedules = schedSnap.docs.map(item => ({ id: item.id, ...item.data() }));
 
-    const deleteBtnHtml = (id) => currentRole === "admin" ? `<button class="danger" data-delete-sched="${id}" style="padding: 4px 8px; font-size: 0.75rem; margin-top: 6px;">Hapus</button>` : "";
+    const deleteBtnHtml = (id) => currentRole === "admin" ? `<button class="danger" data-delete-sched="${id}" style="padding: 4px 10px; font-size: 0.75rem; margin-top: 8px;">Hapus</button>` : "";
 
     $("scheduleList").innerHTML = schedules.length
       ? `<div class="row">` + schedules.map(sched => {
           const courseName = courses[Number(sched.courseId) - 1] || "Mata kuliah";
           return `
-            <div class="card" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between;">
+            <div class="card" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between; background:var(--card);">
               <div>
-                <span class="pill" style="background:#eef2ff; color:var(--blue); margin-bottom:6px;">${escapeHtml(sched.timeText || "Waktu belum diatur")}</span>
+                <span class="pill" style="margin-bottom:6px;">${escapeHtml(sched.timeText || "Waktu belum diatur")}</span>
                 <h3 style="font-size:1rem; margin: 4px 0 8px;">${escapeHtml(courseName)}</h3>
               </div>
-              <div>
-                <a href="${escapeHtml(sched.zoomLink)}" target="_blank" style="display:inline-block; background:var(--green); color:white; padding:6px 12px; border-radius:8px; text-decoration:none; font-size:0.85rem; font-weight:600;">
+              <div style="margin-top: 12px;">
+                <a href="${escapeHtml(sched.zoomLink)}" target="_blank" style="display:inline-block; background:var(--green); color:white; padding:8px 14px; border-radius:10px; text-decoration:none; font-size:0.85rem; font-weight:600;">
                   📹 Gabung Kelas (Zoom)
                 </a>
                 ${deleteBtnHtml(sched.id)}
@@ -552,11 +627,11 @@ async function loadTasks() {
           const filterCategoryClass = status === "selesai" ? "task-done" : "task-active";
 
           const targetBadge = task.target === "kelompok" 
-            ? `<span class="pill" style="background:#fef3c7; color:#92400e;">👥 Kelompok</span>` 
-            : `<span class="pill" style="background:#e0f2fe; color:#0369a1;">🌐 Semua</span>`;
+            ? `<span class="pill" style="background:rgba(217, 119, 6, 0.1); color:var(--amber);">👥 Kelompok</span>` 
+            : `<span class="pill">🌐 Semua</span>`;
 
           const adminControls = currentRole === "admin" ? `
-            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); display:flex; gap: 8px;">
+            <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); display:flex; gap: 8px;">
                <button class="secondary" data-edit="${escapeHtml(task.id)}" style="padding: 6px 12px; font-size: 0.85rem;">✏️ Edit</button>
                <button class="danger" data-delete="${escapeHtml(task.id)}" style="padding: 6px 12px; font-size: 0.85rem;">🗑️ Hapus</button>
             </div>
@@ -567,15 +642,15 @@ async function loadTasks() {
               <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                 <div>
                   <h3 style="margin:0 0 6px; font-size:1.1rem;">${escapeHtml(task.title || "Tugas tanpa judul")}</h3>
-                  <div class="muted" style="margin-bottom: 8px;">
-                    <span class="pill" style="background:#f1f5f9; color:var(--muted)">${escapeHtml(course)}</span> 
-                    <span class="pill" style="background:#f1f5f9; color:var(--muted)">${escapeHtml(task.type || "tugas")}</span>
+                  <div class="muted" style="margin-bottom: 8px; display: flex; gap: 6px; flex-wrap: wrap;">
+                    <span class="pill" style="background:var(--line); color:var(--ink)">${escapeHtml(course)}</span> 
+                    <span class="pill" style="background:var(--line); color:var(--ink)">${escapeHtml(task.type || "tugas")}</span>
                     ${targetBadge}
                   </div>
                 </div>
               </div>
 
-              <p style="margin: 8px 0; font-size: 0.95rem;">${escapeHtml(task.description || "")}</p>
+              <p style="margin: 8px 0; font-size: 0.95rem; line-height: 1.5;">${escapeHtml(task.description || "")}</p>
 
               <div style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--line); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <div style="font-size: 0.85rem; line-height: 1.4;">
@@ -585,7 +660,7 @@ async function loadTasks() {
                   </span>
                 </div>
                 <div class="actions">
-                  <span class="status ${statusClass}" style="margin-right:8px; padding: 4px 8px; border-radius: 6px; background: rgba(0,0,0,0.03);">
+                  <span class="status ${statusClass}" style="margin-right:8px; padding: 6px 10px; border-radius: 8px; background: var(--line);">
                     ${statusIcon} ${statusText}
                   </span>
                   <button class="secondary" data-progress="${escapeHtml(task.id)}" data-status="${escapeHtml(status)}">
@@ -667,6 +742,10 @@ function triggerEditTask(taskId) {
   }
 
   $("adminPanel").scrollIntoView({ behavior: 'smooth' });
+}
+
+async function triggerDeleteCard(taskId) {
+  // cadangan fungsi
 }
 
 async function triggerDeleteTask(taskId) {
