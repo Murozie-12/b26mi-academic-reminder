@@ -77,99 +77,11 @@ label{font-size:.85rem;font-weight:600;display:block; margin-bottom: 2px;}
 .doing{color:var(--amber)}
 .todo{color:var(--red)}
 
-/* TOAST NOTIFICATION (Mengambang di Pojok Kanan Bawah) */
-#toastContainer {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  z-index: 9999;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.toast {
-  background: var(--card);
-  color: var(--ink);
-<!doctype html>
-<html lang="id">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>B26MI — Academic Reminder</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-:root {
-  --bg: #f8fafc;
-  --card: #ffffff;
-  --ink: #0f172a;
-  --muted: #64748b;
-  --blue: #2563eb;
-  --blue-hover: #1d4ed8;
-  --green: #16a34a;
-  --amber: #d97706;
-  --red: #dc2626;
-  --line: #e2e8f0;
-  --card-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
-  --header-bg: #0f172a;
-}
+/* Progress Bar Styling */
+.progress-container { background: var(--line); border-radius: 99px; height: 10px; width: 100%; overflow: hidden; margin-top: 8px; }
+.progress-bar { background: var(--green); height: 100%; width: 0%; transition: width 0.4s ease; }
 
-[data-theme="dark"] {
-  --bg: #0b0f19;
-  --card: #131c2e;
-  --ink: #f8fafc;
-  --muted: #94a3b8;
-  --blue: #3b82f6;
-  --blue-hover: #60a5fa;
-  --green: #22c55e;
-  --amber: #f59e0b;
-  --red: #ef4444;
-  --line: #1e293b;
-  --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3);
-  --header-bg: #090e17;
-}
-
-*{box-sizing:border-box}
-body{margin:0;font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--ink);transition: background 0.3s ease, color 0.3s ease;}
-
-header{background:var(--header-bg);color:#fff;padding:20px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1);}
-header h1{font-size:1.25rem;margin:0 0 4px; font-weight: 700;}
-header p{margin:0;color:#94a3b8;font-size:.875rem}
-
-main{max-width:1050px;margin:auto;padding:20px 16px;}
-.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
-
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:var(--card-shadow);margin-bottom:16px; transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;}
-h2{font-size:1.1rem;margin:0 0 12px; font-weight: 600;}
-.muted{color:var(--muted);font-size:.9rem}
-.pill{display:inline-block;border-radius:999px;padding:5px 12px;font-size:.75rem;font-weight:600;background:rgba(37, 99, 235, 0.1);color:var(--blue)}
-
-button,input,select,textarea{font:inherit; transition: all 0.2s ease;}
-button{border:0;border-radius:12px;background:var(--blue);color:#fff;padding:10px 16px;cursor:pointer;font-weight:600; font-size: 0.9rem;}
-button.secondary{background:var(--line);color:var(--ink)}
-button.danger{background:rgba(220, 38, 38, 0.1);color:var(--red)}
-button:disabled{opacity:.5;cursor:not-allowed}
-button:hover:not(:disabled) {filter: brightness(1.05); transform: translateY(-1px);}
-button:active:not(:disabled) {transform: translateY(0);}
-
-input,select,textarea{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);margin:6px 0 12px; font-size: 0.9rem;}
-input:focus, select:focus, textarea:focus {border-color: var(--blue); outline: none; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);}
-
-label{font-size:.85rem;font-weight:600;display:block; margin-bottom: 2px;}
-.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-
-.task{border:1px solid var(--line);border-radius:16px;padding:18px;margin:12px 0;background:var(--card); transition: transform 0.2s ease, box-shadow 0.2s ease;}
-.task:hover{box-shadow: 0 6px 20px rgba(0,0,0,0.08); transform: translateY(-2px);}
-.task.completed-task { opacity: 0.65; background: rgba(0,0,0,0.01); }
-.task h3{margin:0 0 8px;font-size:1.1rem; font-weight: 600;}
-.status{font-size:.85rem;font-weight:700}
-.done{color:var(--green)}
-.doing{color:var(--amber)}
-.todo{color:var(--red)}
-
-/* TOAST NOTIFICATION */
+/* Toast Notification */
 #toastContainer {
   position: fixed;
   bottom: 24px;
@@ -232,6 +144,15 @@ footer{padding:30px;text-align:center;color:var(--muted);font-size:.85rem}
 </header>
 
 <main>
+  <!-- PAPAN PENGUMUMAN KELAS (Fitur 2) -->
+  <section class="card" id="announcementCard" style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(22, 163, 74, 0.08)); border-color: var(--blue);">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h2 style="margin-bottom: 6px; color: var(--blue);">📢 Pengumuman Kelas</h2>
+      <button id="editAnnouncementBtn" class="secondary hidden" style="padding: 4px 10px; font-size: 0.75rem;">Edit Pengumuman</button>
+    </div>
+    <div id="announcementText" style="font-size: 0.95rem; line-height: 1.5;">Memuat pengumuman...</div>
+  </section>
+
   <section class="card">
     <div class="actions" style="justify-content:space-between">
       <div><h2>Selamat datang di B26MI</h2><div id="authStatus" class="muted">Belum login</div></div>
@@ -243,7 +164,15 @@ footer{padding:30px;text-align:center;color:var(--muted);font-size:.85rem}
   <div id="appArea" class="hidden">
     <div class="row">
       <section class="card"><div class="muted">Tugas terlihat</div><h2 id="taskCount" style="margin-top:4px;">0</h2></section>
-      <section class="card"><div class="muted">Tugas selesai oleh saya</div><h2 id="doneCount" style="margin-top:4px;">0</h2></section>
+      <!-- Statistik Progres Visual (Fitur 5) -->
+      <section class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="muted">Progres Saya</div>
+          <span id="progressPercent" style="font-size: 0.85rem; font-weight: 700; color: var(--green);">0%</span>
+        </div>
+        <h2 id="doneCount" style="margin-top:4px; margin-bottom: 4px;">0 dari 0</h2>
+        <div class="progress-container"><div id="progressBar" class="progress-bar"></div></div>
+      </section>
       <section class="card"><div class="muted">Peran akun</div><h2 id="roleLabel" style="margin-top:4px;">Mahasiswa</h2><span id="rolePill" class="pill" style="margin-top:4px;">mahasiswa</span></section>
     </div>
 
@@ -325,6 +254,26 @@ footer{padding:30px;text-align:center;color:var(--muted);font-size:.85rem}
       </form>
 
       <hr style="border:0; border-top:1px solid var(--line); margin: 24px 0;">
+      <h2>Panel Admin — Pengaturan Kontak PJMK WhatsApp</h2>
+      <form id="pjmkForm">
+        <div>
+          <label>Nomor WhatsApp PJMK (Awali dengan kode negara, contoh: 628123456789)</label>
+          <input id="pjmkPhoneInput" type="text" placeholder="628xxxxxxxxxx" required>
+        </div>
+        <button type="submit" style="margin-top: 6px; background: var(--green);">Simpan Nomor PJMK</button>
+      </form>
+
+      <hr style="border:0; border-top:1px solid var(--line); margin: 24px 0;">
+      <h2>Panel Admin — Perbarui Pengumuman Kelas</h2>
+      <form id="announcementForm">
+        <div>
+          <label>Isi Pengumuman</label>
+          <textarea id="announcementInput" rows="3" placeholder="Tulis pengumuman penting untuk kelas di sini..."></textarea>
+        </div>
+        <button type="submit" style="margin-top: 6px;">Publikasikan Pengumuman</button>
+      </form>
+
+      <hr style="border:0; border-top:1px solid var(--line); margin: 24px 0;">
       <h2>Panel Admin — Tambahkan Jadwal & Link Zoom</h2>
       <form id="scheduleForm">
         <div class="formgrid">
@@ -365,10 +314,9 @@ footer{padding:30px;text-align:center;color:var(--muted);font-size:.85rem}
   </div>
 </main>
 
-<!-- CONTAINER UNTUK TOAST NOTIFICATION -->
 <div id="toastContainer"></div>
 
-<footer>B26MI — Academic Reminder · Versi Lengkap & Profesional</footer>
+<footer>B26MI — Academic Reminder</footer>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
@@ -386,7 +334,6 @@ const firebaseConfig = {
   
 const $ = id => document.getElementById(id);
 
-// FUNGSI TOAST NOTIFICATION MENGAMBANG
 const showToast = (text, isError = false) => {
   const container = $("toastContainer");
   const toast = document.createElement("div");
@@ -402,9 +349,9 @@ const showToast = (text, isError = false) => {
   }, 3500);
 };
 
-const msg = (text, warn = false) => {
-  showToast(text, warn);
-};
+// FITUR 4: Detektor Koneksi Offline
+window.addEventListener('online', () => showToast("Koneksi internet pulih kembali."));
+window.addEventListener('offline', () => showToast("⚠️ Koneksi internet terputus!", true));
 
 const courses = [
   "Bahasa Arab", "Teosofi", "Teori belajar dan psikologi perkembangan",
@@ -419,6 +366,7 @@ let currentUser = null;
 let currentRole = "mahasiswa";
 let editingTaskId = null;
 let allTasksData = [];
+let globalPjmkPhone = "628123456789"; // Nomor default PJMK
 
 const themeToggleBtn = $("themeToggleBtn");
 const currentTheme = localStorage.getItem("theme") || "light";
@@ -466,23 +414,14 @@ function getDeadlineInfo(due) {
   return { text: "🔴 Kurang dari 1 jam!", color: "var(--red)", weight: "bold" };
 }
 
-// FUNGSI PEMBUAT LINK GOOGLE CALENDAR
 function generateGoogleCalendarUrl(taskTitle, courseName, dueDate, description) {
   if (!dueDate || isNaN(dueDate.getTime())) return "#";
-  
-  // Format waktu untuk Google Calendar (YYYYMMDDTHHmmssZ)
-  const formatGCalTime = (date) => {
-    return date.toISOString().replace(/-|:|\.\d\d\d/g,"");
-  };
-
+  const formatGCalTime = (date) => date.toISOString().replace(/-|:|\.\d\d\d/g,"");
   const startTime = formatGCalTime(dueDate);
-  // Set durasi acara 1 jam ke depan
   const endDateObj = new Date(dueDate.getTime() + 60 * 60 * 1000);
   const endTime = formatGCalTime(endDateObj);
-
   const text = encodeURIComponent(`Tugas [${courseName}]: ${taskTitle}`);
   const details = encodeURIComponent(`${description || "Tidak ada catatan."}\n\nPengingat Akademik B26MI`);
-  
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${startTime}/${endTime}&details=${details}`;
 }
 
@@ -511,10 +450,9 @@ if (!isConfigured) {
     auth = getAuth(app);
     db = getFirestore(app);
     $("loginBtn").disabled = false;
-    $("message").style.display = "none"; 
 
     $("loginBtn").addEventListener("click", async () => {
-      try { await signInWithPopup(auth, new GoogleAuthProvider()); $("message").style.display = "none"; }
+      try { await signInWithPopup(auth, new GoogleAuthProvider()); }
       catch (error) { showToast("Login gagal: " + error.message, true); }
     });
 
@@ -526,6 +464,8 @@ if (!isConfigured) {
     $("refreshBtn").addEventListener("click", () => {
       loadTasks();
       loadSchedules();
+      loadAnnouncement();
+      loadPjmkPhone();
       showToast("Data berhasil dimuat ulang.");
     });
 
@@ -533,7 +473,7 @@ if (!isConfigured) {
       currentUser = user;
       $("appArea").classList.toggle("hidden", !user);
       $("loginBtn").classList.toggle("hidden", !!user);
-      $("logoutBtn").classList.toggle("hidden", !user);
+          $("logoutBtn").classList.toggle("hidden", !user);
       $("authStatus").textContent = user ? `${user.displayName || "Mahasiswa"} · ${user.email}` : "Belum login";
 
       if (!user) { currentRole = "mahasiswa"; return; }
@@ -555,12 +495,49 @@ if (!isConfigured) {
         $("rolePill").textContent = currentRole;
         $("adminPanel").classList.toggle("hidden", currentRole !== "admin");
         $("adminDashboard").classList.toggle("hidden", currentRole !== "admin");
+        $("editAnnouncementBtn").classList.toggle("hidden", currentRole !== "admin");
         
         await loadTasks();
         await loadSchedules();
+        await loadAnnouncement();
+        await loadPjmkPhone();
         if (currentRole === "admin") await loadAdminDashboard();
       } catch (error) {
         showToast("Login berhasil, tetapi profil database gagal dibaca: " + error.message, true);
+      }
+    });
+
+    // Simpan/Update Pengumuman (Fitur 2)
+    $("announcementForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!currentUser || currentRole !== "admin") return;
+
+      try {
+        await setDoc(doc(db, "settings", "announcement"), {
+          text: $("announcementInput").value.trim(),
+          updatedAt: serverTimestamp()
+        });
+        showToast("Pengumuman berhasil diperbarui.");
+        loadAnnouncement();
+      } catch (error) {
+        showToast("Gagal menyimpan pengumuman: " + error.message, true);
+      }
+    });
+
+    // Simpan Nomor PJMK
+    $("pjmkForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!currentUser || currentRole !== "admin") return;
+
+      try {
+        await setDoc(doc(db, "settings", "pjmk"), {
+          phone: $("pjmkPhoneInput").value.trim(),
+          updatedAt: serverTimestamp()
+        });
+        showToast("Nomor PJMK berhasil disimpan.");
+        loadPjmkPhone();
+      } catch (error) {
+        showToast("Gagal menyimpan nomor PJMK: " + error.message, true);
       }
     });
 
@@ -575,7 +552,7 @@ if (!isConfigured) {
 
         const taskData = {
           title: $("taskTitle").value.trim(),
-                    courseId: $("courseSelect").value,
+          courseId: $("courseSelect").value,
           type: $("taskType").value,
           target: $("taskTarget").value,
           dueAt: new Date($("dueAt").value),
@@ -641,6 +618,34 @@ function resetFormToTambah() {
   $("submitTaskBtn").textContent = "Simpan tugas";
   $("submitTaskBtn").disabled = false;
   $("cancelEditBtn").classList.add("hidden");
+}
+
+async function loadAnnouncement() {
+  try {
+    const docSnap = await getDoc(doc(db, "settings", "announcement"));
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      $("announcementText").textContent = data.text || "Tidak ada pengumuman saat ini.";
+      $("announcementInput").value = data.text || "";
+    } else {
+      $("announcementText").textContent = "Belum ada pengumuman dari admin.";
+    }
+  } catch (e) {
+    $("announcementText").textContent = "Gagal memuat pengumuman.";
+  }
+}
+
+async function loadPjmkPhone() {
+  try {
+    const docSnap = await getDoc(doc(db, "settings", "pjmk"));
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      globalPjmkPhone = data.phone || "628123456789";
+      $("pjmkPhoneInput").value = globalPjmkPhone;
+    }
+  } catch (e) {
+    console.error("Gagal memuat nomor PJMK");
+  }
 }
 
 async function loadAdminDashboard() {
@@ -761,9 +766,14 @@ async function loadTasks() {
     const progressSnap = await getDocs(progressQuery);
     const myProgress = new Map(progressSnap.docs.map(item => [item.data().taskId, item.data()]));
 
-    $("doneCount").textContent = [...myProgress.values()].filter(progress => progress.status === "selesai").length;
+    const completedCount = [...myProgress.values()].filter(progress => progress.status === "selesai").length;
+    $("doneCount").textContent = `${completedCount} dari ${tasks.length}`;
 
-    // PENYORTIRAN: Pisahkan tugas yang belum selesai dan yang sudah selesai (Selesai dipindah ke bawah)
+    // FITUR 5: Perhitungan Progres Bar Visual (%)
+    const percent = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
+    $("progressPercent").textContent = `${percent}%`;
+    $("progressBar").style.width = `${percent}%`;
+
     const activeTasks = [];
     const completedTasks = [];
 
@@ -777,7 +787,6 @@ async function loadTasks() {
       }
     });
 
-    // Gabungkan dengan urutan: Belum selesai di atas, Selesai di bawah
     const sortedTasks = [...activeTasks, ...completedTasks];
 
     $("tasksList").innerHTML = sortedTasks.length
@@ -797,6 +806,10 @@ async function loadTasks() {
             : `<span class="pill">🌐 Semua</span>`;
 
           const gcalUrl = generateGoogleCalendarUrl(task.title, course, due, task.description);
+
+          // Tautan WhatsApp PJMK dengan pesan otomatis "Assalamu'alaikum"
+          const waMessage = encodeURIComponent(`Assalamu'alaikum, mau bertanya terkait tugas [${course}] "${task.title}".`);
+          const waUrl = `https://wa.me/${globalPjmkPhone}?text=${waMessage}`;
 
           const adminControls = currentRole === "admin" ? `
             <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); display:flex; gap: 8px;">
@@ -826,9 +839,14 @@ async function loadTasks() {
                   <span style="color: ${dueInfo.color}; font-weight: ${dueInfo.weight}; font-size: 0.8rem; margin-top: 2px; display: inline-block;">
                     ${dueInfo.text}
                   </span><br>
-                  <a href="${gcalUrl}" target="_blank" style="display:inline-block; margin-top:6px; font-size:0.75rem; color:var(--blue); text-decoration:none; font-weight:600;">
-                    📅 + Google Calendar
-                  </a>
+                  <div style="display:flex; gap: 10px; margin-top: 6px;">
+                    <a href="${gcalUrl}" target="_blank" style="font-size:0.75rem; color:var(--blue); text-decoration:none; font-weight:600;">
+                      📅 + Google Calendar
+                    </a>
+                    <a href="${waUrl}" target="_blank" style="font-size:0.75rem; color:var(--green); text-decoration:none; font-weight:600;">
+                      💬 Hubungi PJMK
+                    </a>
+                  </div>
                 </div>
                 <div class="actions">
                   <span class="status ${statusClass}" style="margin-right:8px; padding: 6px 10px; border-radius: 8px; background: var(--line);">
@@ -925,11 +943,11 @@ async function triggerDeleteTask(taskId) {
     await deleteDoc(doc(db, "tasks", taskId));
     showToast("Tugas berhasil dihapus.");
     await loadTasks();
-    if (currentCardCount = currentRole === "admin") await loadAdminDashboard();
+    if (currentRole === "admin") await loadAdminDashboard();
   } catch (error) {
-    showToast("Gagal menghapus tugas: " + error.message, true);
+    showToast("Gagal menghapus tugas: " + error.error || error.message, true);
   } finally {
-    document.body.style.cursor = "default";
+      document.body.style.cursor = "default";
   }
 }
 </script>
