@@ -77,11 +77,9 @@ label{font-size:.85rem;font-weight:600;display:block; margin-bottom: 2px;}
 .doing{color:var(--amber)}
 .todo{color:var(--red)}
 
-/* Progress Bar Styling */
 .progress-container { background: var(--line); border-radius: 99px; height: 10px; width: 100%; overflow: hidden; margin-top: 8px; }
 .progress-bar { background: var(--green); height: 100%; width: 0%; transition: width 0.4s ease; }
 
-/* Toast Notification */
 #toastContainer {
   position: fixed;
   bottom: 24px;
@@ -144,11 +142,9 @@ footer{padding:30px;text-align:center;color:var(--muted);font-size:.85rem}
 </header>
 
 <main>
-  <!-- PAPAN PENGUMUMAN KELAS (Fitur 2) -->
   <section class="card" id="announcementCard" style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(22, 163, 74, 0.08)); border-color: var(--blue);">
     <div style="display:flex; justify-content:space-between; align-items:center;">
       <h2 style="margin-bottom: 6px; color: var(--blue);">📢 Pengumuman Kelas</h2>
-      <button id="editAnnouncementBtn" class="secondary hidden" style="padding: 4px 10px; font-size: 0.75rem;">Edit Pengumuman</button>
     </div>
     <div id="announcementText" style="font-size: 0.95rem; line-height: 1.5;">Memuat pengumuman...</div>
   </section>
@@ -164,7 +160,6 @@ footer{padding:30px;text-align:center;color:var(--muted);font-size:.85rem}
   <div id="appArea" class="hidden">
     <div class="row">
       <section class="card"><div class="muted">Tugas terlihat</div><h2 id="taskCount" style="margin-top:4px;">0</h2></section>
-      <!-- Statistik Progres Visual (Fitur 5) -->
       <section class="card">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div class="muted">Progres Saya</div>
@@ -254,13 +249,19 @@ footer{padding:30px;text-align:center;color:var(--muted);font-size:.85rem}
       </form>
 
       <hr style="border:0; border-top:1px solid var(--line); margin: 24px 0;">
-      <h2>Panel Admin — Pengaturan Kontak PJMK WhatsApp</h2>
+      <h2>Panel Admin — Atur Nomor WhatsApp PJMK per Mata Kuliah</h2>
       <form id="pjmkForm">
-        <div>
-          <label>Nomor WhatsApp PJMK (Awali dengan kode negara, contoh: 628123456789)</label>
-          <input id="pjmkPhoneInput" type="text" placeholder="628xxxxxxxxxx" required>
+        <div class="formgrid">
+          <div>
+            <label>Pilih Mata Kuliah</label>
+            <select id="pjmkCourseSelect" required></select>
+          </div>
+          <div>
+            <label>Nomor WhatsApp PJMK (Awali 62)</label>
+            <input id="pjmkPhoneInput" type="text" placeholder="628xxxxxxxxxx" required>
+          </div>
         </div>
-        <button type="submit" style="margin-top: 6px; background: var(--green);">Simpan Nomor PJMK</button>
+        <button type="submit" style="margin-top: 6px; background: var(--green);">Simpan Nomor PJMK Matkul Ini</button>
       </form>
 
       <hr style="border:0; border-top:1px solid var(--line); margin: 24px 0;">
@@ -349,7 +350,6 @@ const showToast = (text, isError = false) => {
   }, 3500);
 };
 
-// FITUR 4: Detektor Koneksi Offline
 window.addEventListener('online', () => showToast("Koneksi internet pulih kembali."));
 window.addEventListener('offline', () => showToast("⚠️ Koneksi internet terputus!", true));
 
@@ -366,7 +366,7 @@ let currentUser = null;
 let currentRole = "mahasiswa";
 let editingTaskId = null;
 let allTasksData = [];
-let globalPjmkPhone = "628123456789"; // Nomor default PJMK
+let pjmkDataMap = {}; // Menyimpan database nomor WA PJMK per matkul
 
 const themeToggleBtn = $("themeToggleBtn");
 const currentTheme = localStorage.getItem("theme") || "light";
@@ -393,6 +393,7 @@ function showCourses() {
   const optionsHtml = courses.map((course, i) => `<option value="${i + 1}">${escapeHtml(course)}</option>`).join("");
   $("courseSelect").innerHTML = optionsHtml;
   $("scheduleCourseSelect").innerHTML = optionsHtml;
+  $("pjmkCourseSelect").innerHTML = optionsHtml;
 }
   
 function escapeHtml(value) {
@@ -465,7 +466,7 @@ if (!isConfigured) {
       loadTasks();
       loadSchedules();
       loadAnnouncement();
-      loadPjmkPhone();
+      loadPjmkPhones();
       showToast("Data berhasil dimuat ulang.");
     });
 
@@ -473,7 +474,7 @@ if (!isConfigured) {
       currentUser = user;
       $("appArea").classList.toggle("hidden", !user);
       $("loginBtn").classList.toggle("hidden", !!user);
-          $("logoutBtn").classList.toggle("hidden", !user);
+      $("logoutBtn").classList.toggle("hidden", !user);
       $("authStatus").textContent = user ? `${user.displayName || "Mahasiswa"} · ${user.email}` : "Belum login";
 
       if (!user) { currentRole = "mahasiswa"; return; }
@@ -495,19 +496,17 @@ if (!isConfigured) {
         $("rolePill").textContent = currentRole;
         $("adminPanel").classList.toggle("hidden", currentRole !== "admin");
         $("adminDashboard").classList.toggle("hidden", currentRole !== "admin");
-        $("editAnnouncementBtn").classList.toggle("hidden", currentRole !== "admin");
         
         await loadTasks();
         await loadSchedules();
         await loadAnnouncement();
-        await loadPjmkPhone();
+        await loadPjmkPhones();
         if (currentRole === "admin") await loadAdminDashboard();
       } catch (error) {
         showToast("Login berhasil, tetapi profil database gagal dibaca: " + error.message, true);
       }
     });
 
-    // Simpan/Update Pengumuman (Fitur 2)
     $("announcementForm").addEventListener("submit", async event => {
       event.preventDefault();
       if (!currentUser || currentRole !== "admin") return;
@@ -524,18 +523,22 @@ if (!isConfigured) {
       }
     });
 
-    // Simpan Nomor PJMK
+    // Simpan Nomor PJMK per Matkul
     $("pjmkForm").addEventListener("submit", async event => {
       event.preventDefault();
       if (!currentUser || currentRole !== "admin") return;
 
+      const courseId = $("pjmkCourseSelect").value;
+      const phone = $("pjmkPhoneInput").value.trim();
+
       try {
-        await setDoc(doc(db, "settings", "pjmk"), {
-          phone: $("pjmkPhoneInput").value.trim(),
+        await setDoc(doc(db, "pjmk_contacts", courseId), {
+          courseId: courseId,
+          phone: phone,
           updatedAt: serverTimestamp()
         });
-        showToast("Nomor PJMK berhasil disimpan.");
-        loadPjmkPhone();
+        showToast("Nomor PJMK mata kuliah ini berhasil disimpan.");
+        loadPjmkPhones();
       } catch (error) {
         showToast("Gagal menyimpan nomor PJMK: " + error.message, true);
       }
@@ -635,14 +638,16 @@ async function loadAnnouncement() {
   }
 }
 
-async function loadPjmkPhone() {
+async function loadPjmkPhones() {
   try {
-    const docSnap = await getDoc(doc(db, "settings", "pjmk"));
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      globalPjmkPhone = data.phone || "628123456789";
-      $("pjmkPhoneInput").value = globalPjmkPhone;
-    }
+    const snap = await getDocs(collection(db, "pjmk_contacts"));
+    pjmkDataMap = {};
+    snap.forEach(item => {
+      const data = item.data();
+      pjmkDataMap[data.courseId] = data.phone;
+    });
+    // Muat ulang daftar tugas agar tombol WA memperbarui nomor sesuai matkulnya masing-masing
+    if (db && currentUser) loadTasks();
   } catch (e) {
     console.error("Gagal memuat nomor PJMK");
   }
@@ -769,7 +774,6 @@ async function loadTasks() {
     const completedCount = [...myProgress.values()].filter(progress => progress.status === "selesai").length;
     $("doneCount").textContent = `${completedCount} dari ${tasks.length}`;
 
-    // FITUR 5: Perhitungan Progres Bar Visual (%)
     const percent = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
     $("progressPercent").textContent = `${percent}%`;
     $("progressBar").style.width = `${percent}%`;
@@ -807,9 +811,10 @@ async function loadTasks() {
 
           const gcalUrl = generateGoogleCalendarUrl(task.title, course, due, task.description);
 
-          // Tautan WhatsApp PJMK dengan pesan otomatis "Assalamu'alaikum"
+          // Ambil nomor WA sesuai mata kuliah tugas tersebut (jika belum diatur admin, arahkan ke pesan default)
+          const pjmkPhone = pjmkDataMap[task.courseId] || "628123456789";
           const waMessage = encodeURIComponent(`Assalamu'alaikum, mau bertanya terkait tugas [${course}] "${task.title}".`);
-          const waUrl = `https://wa.me/${globalPjmkPhone}?text=${waMessage}`;
+          const waUrl = `https://wa.me/${pjmkPhone}?text=${waMessage}`;
 
           const adminControls = currentRole === "admin" ? `
             <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); display:flex; gap: 8px;">
@@ -944,10 +949,10 @@ async function triggerDeleteTask(taskId) {
     showToast("Tugas berhasil dihapus.");
     await loadTasks();
     if (currentRole === "admin") await loadAdminDashboard();
-  } catch (error) {
-    showToast("Gagal menghapus tugas: " + error.error || error.message, true);
+    } catch (error) {
+    showToast("Gagal menghapus tugas: " + error.message, true);
   } finally {
-      document.body.style.cursor = "default";
+    document.body.style.cursor = "default";
   }
 }
 </script>
