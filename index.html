@@ -47,7 +47,7 @@ label{font-size:.88rem;font-weight:600;display:block}
 .hidden{display:none!important}
 footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
 
-/* Logika CSS untuk Filter (Sangat Cepat tanpa reload DB) */
+/* Logika CSS untuk Filter */
 #tasksList.show-active-only .task-done { display: none !important; }
 #tasksList.show-done-only .task-active { display: none !important; }
 </style>
@@ -58,7 +58,7 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
   <p>Pengingat tugas, presentasi, dan progres akademik</p>
 </header>
 <main>
-  <div id="message" class="notice">Sebelum digunakan kelas, admin harus mengisi konfigurasi Firebase dan menerapkan aturan Firestore yang aman. Jangan mengaktifkan aturan publik.</div>
+  <div id="message" class="notice">Sebelum digunakan kelas, admin harus mengisi konfigurasi Firebase dan menerapkan aturan Firestore yang aman.</div>
   
   <section class="card">
     <div class="actions" style="justify-content:space-between">
@@ -93,10 +93,15 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
       </div>
     </section>
 
-    <!-- PANEL TAMBAH TUGAS ADMIN -->
+    <!-- PANEL TAMBAH/EDIT TUGAS ADMIN -->
     <section id="adminPanel" class="card hidden">
-      <h2>Panel Admin — Tambahkan tugas</h2>
-      <p class="muted">Hanya akun yang sudah ditetapkan sebagai Admin di Firestore yang boleh membuat tugas.</p>
+      <!-- FITUR BARU: Header Dinamis untuk Mode Edit -->
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 id="formTitle">Panel Admin — Tambahkan tugas</h2>
+        <button id="cancelEditBtn" class="secondary hidden" style="padding: 6px 12px; font-size: 0.8rem;">Batal Edit</button>
+      </div>
+      
+      <p class="muted">Hanya akun yang sudah ditetapkan sebagai Admin di Firestore yang boleh mengelola tugas.</p>
       <form id="taskForm">
         <div class="formgrid">
           <div>
@@ -125,7 +130,7 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
         </div>
         <label>Instruksi / catatan</label>
         <textarea id="taskDescription" rows="2" maxlength="2000" placeholder="Petunjuk pengerjaan, format pengumpulan, dan lain-lain"></textarea>
-        <button type="submit">Simpan tugas</button>
+        <button type="submit" id="submitTaskBtn">Simpan tugas</button>
       </form>
     </section>
 
@@ -136,7 +141,6 @@ footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
         <button id="refreshBtn" class="secondary">Muat ulang</button>
       </div>
       
-      <!-- FITUR BARU: Tab Filter Cepat -->
       <div class="actions" style="margin-bottom: 16px; border-bottom: 1px solid var(--line); padding-bottom: 12px;" id="filterContainer">
         <button class="filter-btn" data-filter="all" style="border-radius: 20px; font-size: 0.85rem; padding: 6px 14px;">Semua</button>
         <button class="filter-btn secondary" data-filter="active" style="border-radius: 20px; font-size: 0.85rem; padding: 6px 14px;">Belum Selesai</button>
@@ -164,18 +168,10 @@ import {
   signOut
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
+// FITUR BARU: Menambahkan deleteDoc dan updateDoc
 import {
-  getFirestore,
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  orderBy,
-  where,
-  serverTimestamp,
-  doc,
-  getDoc,
-  setDoc
+  getFirestore, collection, addDoc, getDocs, query, orderBy, where, 
+  serverTimestamp, doc, getDoc, setDoc, deleteDoc, updateDoc
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
 // ========================================
@@ -194,25 +190,16 @@ const firebaseConfig = {
 // 2. VARIABEL DAN FUNGSI DASAR
 // ========================================
 const $ = id => document.getElementById(id);
-
 const msg = (text, warn = false) => {
   $("message").style.display = "block";
   $("message").textContent = text;
   $("message").className = warn ? "notice" : "muted";
 };
 
-// DAFTAR MATA KULIAH TERBARU
 const courses = [
-  "Bahasa Arab",
-  "Teosofi",
-  "Teori belajar dan psikologi perkembangan",
-  "Penulisan Karya ilmiah",
-  "Bahasa Indonesia",
-  "Filsafat pendidikan",
-  "Pancasila",
-  "Studi Fiqih",
-  "Sejarah Peradaban Islam",
-  "Agama Islam"
+  "Bahasa Arab", "Teosofi", "Teori belajar dan psikologi perkembangan",
+  "Penulisan Karya ilmiah", "Bahasa Indonesia", "Filsafat pendidikan",
+  "Pancasila", "Studi Fiqih", "Sejarah Peradaban Islam", "Agama Islam"
 ];
 
 let app = null;
@@ -221,36 +208,28 @@ let db = null;
 let currentUser = null;
 let currentRole = "mahasiswa";
 
+// Variabel untuk menyimpan State (Kondisi) Edit Tugas
+let editingTaskId = null;
+let allTasksData = []; // Menyimpan data tugas untuk ditarik ke form edit
+
 function showCourses() {
   $("courseSelect").innerHTML = courses
-    .map((course, i) => `<option value="${i + 1}">${escapeHtml(course)}</option>`)
-    .join("");
+    .map((course, i) => `<option value="${i + 1}">${escapeHtml(course)}</option>`).join("");
 }
   
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   })[char]);
 }
 
-// FITUR BARU: Fungsi Hitung Mundur Tenggat Waktu
 function getDeadlineInfo(due) {
-  if (!due || isNaN(due.getTime())) {
-    return { text: "Waktu tidak ditentukan", color: "var(--muted)", weight: "normal" };
-  }
-  
+  if (!due || isNaN(due.getTime())) return { text: "Waktu tidak ditentukan", color: "var(--muted)", weight: "normal" };
   const now = new Date();
   const diffMs = due - now;
-  
   if (diffMs < 0) return { text: "⚠️ Terlewat", color: "var(--red)", weight: "bold" };
-  
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  
   if (diffDays > 3) return { text: `Masih ${diffDays} hari`, color: "var(--green)", weight: "normal" };
   if (diffDays > 0) return { text: `Sisa ${diffDays} hari lagi`, color: "var(--amber)", weight: "bold" };
   if (diffHours > 0) return { text: `🔴 Sisa ${diffHours} jam!`, color: "var(--red)", weight: "bold" };
@@ -259,17 +238,13 @@ function getDeadlineInfo(due) {
 
 showCourses();
 
-// FITUR BARU: Event Listener untuk Filter Tombol
+// Filter Cepat
 document.querySelectorAll(".filter-btn").forEach(btn => {
   btn.addEventListener("click", e => {
-    // Ubah visual tombol
     document.querySelectorAll(".filter-btn").forEach(b => b.classList.add("secondary"));
     e.target.classList.remove("secondary");
-    
-    // Terapkan filter list melalui CSS class
     const filter = e.target.dataset.filter;
     const list = $("tasksList");
-    
     if (filter === "all") list.className = "";
     else if (filter === "active") list.className = "show-active-only";
     else if (filter === "done") list.className = "show-done-only";
@@ -279,64 +254,39 @@ document.querySelectorAll(".filter-btn").forEach(btn => {
 // ========================================
 // 3. VALIDASI DAN INISIALISASI FIREBASE
 // ========================================
-const isConfigured =
-  Boolean(firebaseConfig.apiKey) &&
-  Boolean(firebaseConfig.authDomain) &&
-  Boolean(firebaseConfig.projectId) &&
-  Boolean(firebaseConfig.appId) &&
-  !firebaseConfig.apiKey.startsWith("GANTI_") &&
-  !firebaseConfig.appId.startsWith("GANTI_");
+const isConfigured = Boolean(firebaseConfig.apiKey) && !firebaseConfig.apiKey.startsWith("GANTI_");
 
 if (!isConfigured) {
   $("loginBtn").disabled = true;
-  msg("Konfigurasi Firebase belum lengkap. Periksa apiKey, authDomain, projectId, dan appId.", true);
+  msg("Konfigurasi Firebase belum lengkap.", true);
 } else {
   try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
-
     $("loginBtn").disabled = false;
     $("message").style.display = "none"; 
 
-    // ====================================
-    // 4 & 5. LOGIN / LOGOUT
-    // ====================================
     $("loginBtn").addEventListener("click", async () => {
-      try {
-        await signInWithPopup(auth, new GoogleAuthProvider());
-        $("message").style.display = "none";
-      } catch (error) {
-        msg("Login gagal: " + error.message, true);
-      }
+      try { await signInWithPopup(auth, new GoogleAuthProvider()); $("message").style.display = "none"; }
+      catch (error) { msg("Login gagal: " + error.message, true); }
     });
 
     $("logoutBtn").addEventListener("click", async () => {
-      try {
-        await signOut(auth);
-        msg("Kamu berhasil keluar.", false);
-      } catch (error) {
-        msg("Gagal logout: " + error.message, true);
-      }
+      try { await signOut(auth); msg("Kamu berhasil keluar.", false); }
+      catch (error) { msg("Gagal logout: " + error.message, true); }
     });
 
     $("refreshBtn").addEventListener("click", loadTasks);
 
-    // ====================================
-    // 6. STATUS LOGIN DAN HAK AKSES
-    // ====================================
     onAuthStateChanged(auth, async user => {
       currentUser = user;
       $("appArea").classList.toggle("hidden", !user);
       $("loginBtn").classList.toggle("hidden", !!user);
       $("logoutBtn").classList.toggle("hidden", !user);
-
       $("authStatus").textContent = user ? `${user.displayName || "Mahasiswa"} · ${user.email}` : "Belum login";
 
-      if (!user) {
-        currentRole = "mahasiswa";
-        return;
-      }
+      if (!user) { currentRole = "mahasiswa"; return; }
 
       try {
         const userRef = doc(db, "users", user.uid);
@@ -344,10 +294,7 @@ if (!isConfigured) {
 
         if (!userSnap.exists()) {
           await setDoc(userRef, {
-            displayName: user.displayName || "Mahasiswa",
-            email: user.email || "",
-            role: "mahasiswa",
-            createdAt: serverTimestamp()
+            displayName: user.displayName || "Mahasiswa", email: user.email || "", role: "mahasiswa", createdAt: serverTimestamp()
           });
           currentRole = "mahasiswa";
         } else {
@@ -361,46 +308,63 @@ if (!isConfigured) {
         
         await loadTasks();
         if (currentRole === "admin") await loadAdminDashboard();
-
       } catch (error) {
-        msg("Login berhasil, tetapi profil database belum dapat dibaca: " + error.message, true);
+        msg("Login berhasil, tetapi profil database gagal dibaca: " + error.message, true);
       }
     });
 
     // ====================================
-    // 7. TAMBAH TUGAS OLEH ADMIN
+    // 7. TAMBAH & EDIT TUGAS (ADMIN)
     // ====================================
     $("taskForm").addEventListener("submit", async event => {
       event.preventDefault();
       if (!currentUser || currentRole !== "admin") return;
 
       try {
-        const btn = event.target.querySelector('button[type="submit"]');
+        const btn = $("submitTaskBtn");
         btn.disabled = true;
         btn.textContent = "Menyimpan...";
 
-        await addDoc(collection(db, "tasks"), {
+        // Siapkan data tugas dari form
+        const taskData = {
           title: $("taskTitle").value.trim(),
           courseId: $("courseSelect").value,
           type: $("taskType").value,
           dueAt: new Date($("dueAt").value),
-          description: $("taskDescription").value.trim(),
-          createdBy: currentUser.uid,
-          createdAt: serverTimestamp()
-        });
+          description: $("taskDescription").value.trim()
+        };
 
-        event.target.reset();
-        msg("Tugas berhasil disimpan.", false);
+        if (editingTaskId) {
+          // Logika Update (Edit)
+          taskData.updatedAt = serverTimestamp();
+          await updateDoc(doc(db, "tasks", editingTaskId), taskData);
+          msg("Tugas berhasil diperbarui.", false);
+        } else {
+          // Logika Create (Tambah Baru)
+          taskData.createdBy = currentUser.uid;
+          taskData.createdAt = serverTimestamp();
+          await addDoc(collection(db, "tasks"), taskData);
+          msg("Tugas baru berhasil disimpan.", false);
+        }
+
+        // Reset form dan matikan mode Edit
+        resetFormToTambah();
         
         await loadTasks();
         if (currentRole === "admin") await loadAdminDashboard();
 
-        btn.disabled = false;
-        btn.textContent = "Simpan tugas";
         setTimeout(() => { $("message").style.display = "none"; }, 3000);
       } catch (error) {
         msg("Gagal menyimpan tugas: " + error.message, true);
+        $("submitTaskBtn").disabled = false;
+        $("submitTaskBtn").textContent = editingTaskId ? "Update Tugas" : "Simpan tugas";
       }
+    });
+
+    // Tombol Batal Edit
+    $("cancelEditBtn").addEventListener("click", (e) => {
+      e.preventDefault();
+      resetFormToTambah();
     });
 
   } catch (error) {
@@ -409,12 +373,21 @@ if (!isConfigured) {
   }
 }
 
+// Fungsi bantu untuk mengembalikan Form ke mode "Tambah Baru"
+function resetFormToTambah() {
+  $("taskForm").reset();
+  editingTaskId = null;
+  $("formTitle").textContent = "Panel Admin — Tambahkan tugas";
+  $("submitTaskBtn").textContent = "Simpan tugas";
+  $("submitTaskBtn").disabled = false;
+  $("cancelEditBtn").classList.add("hidden");
+}
+
 // ========================================
-// DASHBOARD ADMIN
+// DASHBOARD ADMIN (Tetap sama)
 // ========================================
 async function loadAdminDashboard() {
   if (!db || !currentUser || currentRole !== "admin") return;
-
   try {
     const usersSnap = await getDocs(collection(db, "users"));
     const students = usersSnap.docs.filter(item => item.data().role === "mahasiswa");
@@ -462,7 +435,6 @@ async function loadAdminDashboard() {
           `;
         }).join("")
       : "<p class='muted'>Belum ada progres mahasiswa.</p>";
-
   } catch (error) {
     msg("Dashboard Admin gagal dimuat: " + error.message, true);
   }
@@ -477,6 +449,10 @@ async function loadTasks() {
   try {
     const taskSnap = await getDocs(query(collection(db, "tasks"), orderBy("dueAt", "asc")));
     const tasks = taskSnap.docs.map(item => ({ id: item.id, ...item.data() }));
+    
+    // Simpan semua tugas ke variabel global untuk keperluan Edit
+    allTasksData = tasks;
+    
     $("taskCount").textContent = tasks.length;
     
     const progressQuery = query(collection(db, "task_progress"), where("userId", "==", currentUser.uid));
@@ -492,15 +468,21 @@ async function loadTasks() {
           const due = task.dueAt?.toDate ? task.dueAt.toDate() : task.dueAt ? new Date(task.dueAt) : null;
           
           const dueText = due && !isNaN(due.getTime()) ? due.toLocaleString("id-ID") : "Belum ditentukan";
-          const dueInfo = getDeadlineInfo(due); // Menjalankan fitur hitung mundur
+          const dueInfo = getDeadlineInfo(due); 
           
           const statusText = status === "selesai" ? "Selesai" : status === "dikerjakan" ? "Sedang dikerjakan" : "Belum dikerjakan";
           const statusIcon = status === "selesai" ? "✅" : status === "dikerjakan" ? "🟡" : "🔴";
           const statusClass = status === "selesai" ? "done" : status === "dikerjakan" ? "doing" : "todo";
-          
           const course = courses[Number(task.courseId) - 1] || "Mata kuliah";
-   // CSS class tambahan untuk fungsi Filter Cepat
           const filterCategoryClass = status === "selesai" ? "task-done" : "task-active";
+
+          // FITUR BARU: Tombol Admin (Edit/Hapus) di render secara kondisional
+          const adminControls = currentRole === "admin" ? `
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); display:flex; gap: 8px;">
+               <button class="secondary" data-edit="${escapeHtml(task.id)}" style="padding: 6px 12px; font-size: 0.85rem;">✏️ Edit</button>
+               <button class="danger" data-delete="${escapeHtml(task.id)}" style="padding: 6px 12px; font-size: 0.85rem;">🗑️ Hapus</button>
+            </div>
+          ` : "";
 
           return `
             <article class="task ${filterCategoryClass}">
@@ -517,14 +499,12 @@ async function loadTasks() {
               <p style="margin: 8px 0; font-size: 0.95rem;">${escapeHtml(task.description || "")}</p>
 
               <div style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--line); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                
                 <div style="font-size: 0.85rem; line-height: 1.4;">
                   <span class="muted">Tenggat:</span> <strong style="color:var(--ink)">${escapeHtml(dueText)}</strong><br>
                   <span style="color: ${dueInfo.color}; font-weight: ${dueInfo.weight}; font-size: 0.8rem; margin-top: 2px; display: inline-block;">
                     ${dueInfo.text}
                   </span>
                 </div>
-
                 <div class="actions">
                   <span class="status ${statusClass}" style="margin-right:8px; padding: 4px 8px; border-radius: 6px; background: rgba(0,0,0,0.03);">
                     ${statusIcon} ${statusText}
@@ -533,16 +513,28 @@ async function loadTasks() {
                     Ubah Progres
                   </button>
                 </div>
-
               </div>
+              
+              ${adminControls}
             </article>
           `;
         }).join("")
       : "<p class='muted'>Hore! Belum ada tugas saat ini.</p>";
 
+    // Memasang Event Listener untuk Ubah Progres
     document.querySelectorAll("[data-progress]").forEach(button => {
       button.onclick = () => updateProgress(button.dataset.progress, button.dataset.status);
     });
+
+    // Memasang Event Listener untuk Fitur Admin
+    if (currentRole === "admin") {
+      document.querySelectorAll("[data-edit]").forEach(btn => {
+        btn.onclick = () => triggerEditTask(btn.dataset.edit);
+      });
+      document.querySelectorAll("[data-delete]").forEach(btn => {
+        btn.onclick = () => triggerDeleteTask(btn.dataset.delete);
+      });
+    }
 
   } catch (error) {
     msg("Gagal memuat tugas/progres. Detail: " + error.message, true);
@@ -550,11 +542,10 @@ async function loadTasks() {
 }
   
 // ========================================
-// 9. MEMPERBARUI PROGRES TUGAS (Otomatis Siklus)
+// 9. MEMPERBARUI PROGRES TUGAS
 // ========================================
 async function updateProgress(taskId, oldStatus) {
   if (!currentUser || !db) return;
-
   let nextStatus = "belum";
   if (oldStatus === "belum") nextStatus = "dikerjakan";
   else if (oldStatus === "dikerjakan") nextStatus = "selesai";
@@ -563,29 +554,75 @@ async function updateProgress(taskId, oldStatus) {
   try {
     const progressId = `${taskId}_${currentUser.uid}`;
     document.body.style.cursor = "wait";
-
     await setDoc(doc(db, "task_progress", progressId), {
-      taskId,
-      userId: currentUser.uid,
-      status: nextStatus,
-      updatedAt: serverTimestamp()
+      taskId, userId: currentUser.uid, status: nextStatus, updatedAt: serverTimestamp()
     });
-
     await loadTasks();
-    
-    // Terapkan ulang filter yang sedang aktif setelah status berubah
     const activeFilterBtn = document.querySelector('.filter-btn:not(.secondary)');
     if(activeFilterBtn) activeFilterBtn.click();
-    
-    if (currentRole === "admin") {
-      await loadAdminDashboard();
-    }
+    if (currentRole === "admin") await loadAdminDashboard();
   } catch (error) {
     msg("Gagal memperbarui progres: " + error.message, true);
   } finally {
     document.body.style.cursor = "default";
   }
 }
+
+// ========================================
+// FITUR BARU: Fungsi Edit dan Hapus Tugas
+// ========================================
+function triggerEditTask(taskId) {
+  // Cari data tugas berdasarkan ID dari memori lokal (allTasksData)
+  const task = allTasksData.find(t => t.id === taskId);
+  if (!task) return;
+
+  editingTaskId = taskId;
+  $("formTitle").textContent = "Panel Admin — Edit Tugas";
+  $("submitTaskBtn").textContent = "Update Tugas";
+  $("cancelEditBtn").classList.remove("hidden");
+
+  // Mengisi form dengan data lama
+  $("taskTitle").value = task.title || "";
+  $("courseSelect").value = task.courseId || "1";
+  $("taskType").value = task.type || "individu";
+  $("taskDescription").value = task.description || "";
+
+  // Konversi format tanggal Firestore (Timestamp) ke format input datetime-local (YYYY-MM-DDThh:mm)
+  if (task.dueAt) {
+    const d = task.dueAt.toDate ? task.dueAt.toDate() : new Date(task.dueAt);
+    if (!isNaN(d.getTime())) {
+      const tzOffset = d.getTimezoneOffset() * 60000; // Menyesuaikan zona waktu lokal (WIB/WIT/WITA)
+      const localISOTime = (new Date(d.getTime() - tzOffset)).toISOString().slice(0, 16);
+      $("dueAt").value = localISOTime;
+    }
+  }
+
+  // Scroll layar ke panel Form
+  $("adminPanel").scrollIntoView({ behavior: 'smooth' });
+}
+
+async function triggerDeleteTask(taskId) {
+  // Munculkan Pop Up Konfirmasi
+  const confirmDelete = confirm("Yakin ingin menghapus tugas ini? Aksi ini tidak dapat dibatalkan.");
+  if (!confirmDelete) return;
+
+  try {
+    document.body.style.cursor = "wait";
+    await deleteDoc(doc(db, "tasks", taskId));
+    
+    msg("Tugas berhasil dihapus.", false);
+    
+    await loadTasks();
+    if (currentRole === "admin") await loadAdminDashboard();
+    
+    setTimeout(() => { $("message").style.display = "none"; }, 3000);
+  } catch (error) {
+    msg("Gagal menghapus tugas: " + error.message, true);
+  } finally {
+    document.body.style.cursor = "default";
+  }
+}
+
 </script>
 </body>
 </html>
