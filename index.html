@@ -526,16 +526,54 @@ async function loadTasks() {
         item.data().taskId,
         item.data()
       ])
+async function loadTasks() {
+  if (!db || !currentUser) return;
+
+  try {
+    // Ambil daftar tugas.
+    const taskSnap = await getDocs(
+      query(
+        collection(db, "tasks"),
+        orderBy("dueAt", "asc")
+      )
     );
 
-    // 3. Hitung tugas yang sudah selesai
+    const tasks = taskSnap.docs.map(item => ({
+      id: item.id,
+      ...item.data()
+    }));
+
+    $("taskCount").textContent = tasks.length;
+
+    // Ambil progres berdasarkan peran akun.
+    let progressQuery;
+
+    if (currentRole === "admin") {
+      progressQuery = collection(db, "task_progress");
+    } else {
+      progressQuery = query(
+        collection(db, "task_progress"),
+        where("userId", "==", currentUser.uid)
+      );
+    }
+
+    const progressSnap = await getDocs(progressQuery);
+
+    const myProgress = new Map(
+      progressSnap.docs.map(item => [
+        item.data().taskId,
+        item.data()
+      ])
+    );
+
+    // Hitung jumlah tugas yang selesai.
     $("doneCount").textContent = [
       ...myProgress.values()
     ].filter(progress =>
       progress.status === "selesai"
     ).length;
 
-    // 4. Tampilkan daftar tugas
+    // Tampilkan tugas.
     $("tasksList").innerHTML = tasks.length
       ? tasks.map(task => {
           const progress = myProgress.get(task.id);
@@ -579,7 +617,9 @@ async function loadTasks() {
 
           return `
             <article class="task">
-              <h3>${escapeHtml(task.title || "Tugas tanpa judul")}</h3>
+              <h3>${escapeHtml(
+                task.title || "Tugas tanpa judul"
+              )}</h3>
 
               <div class="muted">
                 ${escapeHtml(course)} ·
@@ -609,13 +649,14 @@ async function loadTasks() {
         }).join("")
       : "<p class='muted'>Belum ada tugas yang dimasukkan.</p>";
 
-    // 5. Hubungkan tombol perubahan progres
+    // Hubungkan tombol perubahan progres.
     document.querySelectorAll("[data-progress]").forEach(button => {
-      button.onclick = () =>
+      button.onclick = () => {
         updateProgress(
           button.dataset.progress,
           button.dataset.status
         );
+      };
     });
 
     msg("Data berhasil dimuat.");
@@ -631,8 +672,7 @@ async function loadTasks() {
       true
     );
   }
-}
-
+  }
 // ========================================
 // 9. MEMPERBARUI PROGRES TUGAS
 // ========================================
