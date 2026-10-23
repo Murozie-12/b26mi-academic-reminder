@@ -68,10 +68,35 @@ LANGKAH KONFIGURASI:
 1. Buka Project settings > General > Your apps > Web app.
 2. Salin konfigurasi Firebase dan ganti nilai di bawah.
 3. Jangan bagikan token privat; Firebase web config bukan kata sandi, tetapi aturan database tetap wajib aman.
-*/
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+*/import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithRedirect,
+  getRedirectResult,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  orderBy,
+  serverTimestamp,
+  doc,
+  getDoc,
+  setDoc
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+// ========================================
+// 1. KONFIGURASI FIREBASE
+// ========================================
 
 const firebaseConfig = {
   apiKey: "AIzaSyBsVOWrSKNO42A3vJ_baQNs1QoLhiBt3M0",
@@ -82,104 +107,453 @@ const firebaseConfig = {
   appId: "1:739552881698:web:c9e5d290e4e4c4a723ee7b"
 };
   
-const $ = id => document.getElementById(id);
-const msg = (s, warn=false) => { $("message").textContent=s; $("message").className=warn?"notice":"muted"; };
-const courses = [
-"Matakuliah 1","Matakuliah 2","Matakuliah 3","Matakuliah 4","Matakuliah 5",
-"Matakuliah 6","Matakuliah 7","Matakuliah 8","Matakuliah 9","Matakuliah 10"
-];
-let app, auth, db, currentUser=null, currentRole="mahasiswa";
-const isConfigured = !firebaseConfig.apiKey.startsWith("GANTI_") && !firebaseConfig.appId.startsWith("GANTI_");
+// ========================================
+// 2. VARIABEL DAN FUNGSI DASAR
+// ========================================
 
-function showCourses(){
-  $("courseSelect").innerHTML = courses.map((c,i)=>`<option value="${i+1}">${c}</option>`).join("");
-  $("coursesList").innerHTML = courses.map((c,i)=>`<div class="card"><span class="pill">MK ${i+1}</span><p>${c}</p></div>`).join("");
+const $ = id => document.getElementById(id);
+
+const msg = (text, warn = false) => {
+  $("message").textContent = text;
+  $("message").className = warn ? "notice" : "muted";
+};
+
+const courses = [
+  "Matakuliah 1",
+  "Matakuliah 2",
+  "Matakuliah 3",
+  "Matakuliah 4",
+  "Matakuliah 5",
+  "Matakuliah 6",
+  "Matakuliah 7",
+  "Matakuliah 8",
+  "Matakuliah 9",
+  "Matakuliah 10"
+];
+
+let app = null;
+let auth = null;
+let db = null;
+let currentUser = null;
+let currentRole = "mahasiswa";
+
+function showCourses() {
+  $("courseSelect").innerHTML = courses
+    .map((course, i) =>
+      `<option value="${i + 1}">${course}</option>`
+    )
+    .join("");
+
+  $("coursesList").innerHTML = courses
+    .map((course, i) =>
+      `<div class="card">
+        <span class="pill">MK ${i + 1}</span>
+        <p>${course}</p>
+      </div>`
+    )
+    .join("");
 }
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
+
 showCourses();
 
+
+// ========================================
+// 3. VALIDASI DAN INISIALISASI FIREBASE
+// ========================================
+
+const isConfigured =
+  Boolean(firebaseConfig.apiKey) &&
+  Boolean(firebaseConfig.authDomain) &&
+  Boolean(firebaseConfig.projectId) &&
+  Boolean(firebaseConfig.appId) &&
+  !firebaseConfig.apiKey.startsWith("GANTI_") &&
+  !firebaseConfig.appId.startsWith("GANTI_") &&
+  !firebaseConfig.apiKey.startsWith("ISI_") &&
+  !firebaseConfig.appId.startsWith("ISI_");
+
 if (!isConfigured) {
-$("#loginBtn").addEventListener("click", async () => {
-  alert("Tombol login berhasil ditekan");
+  $("loginBtn").disabled = true;
 
-  const provider = new GoogleAuthProvider();
-
-  try {
-    await signInWithRedirect(auth, provider);
-  } catch (e) {
-    console.error("Login gagal:", e);
-    msg("Login gagal: " + e.code + " | " + e.message, true);
-  }
-  });
-  
-  $("logoutBtn").addEventListener("click",()=>signOut(auth));
-  $("refreshBtn").addEventListener("click",loadTasks);
-  onAuthStateChanged(auth, async user=>{
-    currentUser=user;
-    $("appArea").classList.toggle("hidden",!user);
-    $("loginBtn").classList.toggle("hidden",!!user);
-    $("logoutBtn").classList.toggle("hidden",!user);
-    $("authStatus").textContent=user?`${user.displayName||"Mahasiswa"} · ${user.email}`:"Belum login";
-    if(user){
-      try {
-        const snap=await getDoc(doc(db,"users",user.uid));
-        currentRole=snap.exists() ? (snap.data().role||"mahasiswa") : "mahasiswa";
-        $("roleLabel").textContent=currentRole==="admin"?"Admin":currentRole==="ketua"?"Ketua kelompok":"Mahasiswa";
-        $("rolePill").textContent=currentRole;
-        $("adminPanel").classList.toggle("hidden",currentRole!=="admin");
-        await loadTasks();
-      } catch(e){msg("Akun berhasil login, tetapi akses database belum tersedia. Pastikan aturan Firestore sudah dipasang dengan aman. Detail: "+e.message,true);}
-    }
-  });
-  $("taskForm").addEventListener("submit",async e=>{
-    e.preventDefault();
-    if(currentRole!=="admin"){msg("Hanya admin yang boleh menambahkan tugas.",true);return;}
-    try{
-      await addDoc(collection(db,"tasks"),{
-        title:$("taskTitle").value.trim(), courseId:$("courseSelect").value,
-        type:$("taskType").value, dueAt:new Date($("dueAt").value),
-        description:$("taskDescription").value.trim(), createdBy:currentUser.uid,
-        createdAt:serverTimestamp()
-      });
-      e.target.reset(); msg("Tugas berhasil disimpan."); await loadTasks();
-    }catch(err){msg("Gagal menyimpan tugas: "+err.message,true);}
-  });
-}
-async function loadTasks(){
-  if(!db||!currentUser)return;
-  try{
-    const snap=await getDocs(query(collection(db,"tasks"),orderBy("dueAt","asc")));
-    const tasks=snap.docs.map(d=>({id:d.id,...d.data()}));
-    $("taskCount").textContent=tasks.length;
-    const progSnap=await getDocs(collection(db,"task_progress"));
-    const myProgress=new Map(progSnap.docs.filter(d=>d.data().userId===currentUser.uid).map(d=>[d.data().taskId,d.data()]));
-    $("doneCount").textContent=[...myProgress.values()].filter(p=>p.status==="selesai").length;
-    $("tasksList").innerHTML=tasks.length?tasks.map(t=>{
-      const p=myProgress.get(t.id); const status=p?.status||"belum";
-      const due=t.dueAt?.toDate?t.dueAt.toDate():t.dueAt?new Date(t.dueAt):null;
-      const dueText=due&&!isNaN(due)?due.toLocaleString("id-ID"):"Belum ditentukan";
-      return `<article class="task"><h3>${escapeHtml(t.title||"Tugas tanpa judul")}</h3><div class="muted">${escapeHtml(courses[Number(t.courseId)-1]||"Mata kuliah")} · ${escapeHtml(t.type||"tugas")}</div><p>${escapeHtml(t.description||"")}</p><p class="muted">Tenggat: ${dueText}</p><div class="actions"><span class="status ${status==="selesai"?"done":status==="dikerjakan"?"doing":"todo"}">Status saya: ${status==="selesai"?"✅ Selesai":status==="dikerjakan"?"🟡 Sedang dikerjakan":"🔴 Belum dikerjakan"}</span><button class="secondary" data-progress="${t.id}" data-status="${status}">Ubah progres</button></div></article>`;
-    }).join(""):"<p class='muted'>Belum ada tugas yang dimasukkan.</p>";
-    document.querySelectorAll("[data-progress]").forEach(btn=>btn.onclick=()=>updateProgress(btn.dataset.progress,btn.dataset.status));
-    msg("Data berhasil dimuat.");
-  }catch (e) {
-  console.error("Gagal memuat tugas/progres:", e);
   msg(
-    "Gagal memuat tugas/progres. Kode: " +
-    e.code + " | Detail: " + e.message,
+    "Konfigurasi Firebase belum lengkap. " +
+    "Periksa apiKey, authDomain, projectId, dan appId.",
     true
   );
+
+} else {
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+
+    $("loginBtn").disabled = false;
+
+    msg("Firebase berhasil diinisialisasi.");
+
+    // ====================================
+    // 4. LOGIN GOOGLE
+    // ====================================
+
+    $("loginBtn").addEventListener("click", async () => {
+      const provider = new GoogleAuthProvider();
+
+      try {
+        await signInWithRedirect(auth, provider);
+      } catch (error) {
+        console.error("Login gagal:", error);
+
+        msg(
+          "Login gagal: " +
+          (error.code || "unknown") +
+          " | " +
+          error.message,
+          true
+        );
+      }
+    });
+
+    // Periksa hasil redirect jika tersedia.
+    getRedirectResult(auth).catch(error => {
+      console.error("Hasil redirect:", error);
+
+      msg(
+        "Proses login Google bermasalah: " +
+        (error.code || "unknown") +
+        " | " +
+        error.message,
+        true
+      );
+    });
+
+    // ====================================
+    // 5. LOGOUT DAN MUAT ULANG
+    // ====================================
+
+    $("logoutBtn").addEventListener("click", async () => {
+      try {
+        await signOut(auth);
+        msg("Kamu berhasil keluar.");
+      } catch (error) {
+        msg("Gagal logout: " + error.message, true);
+      }
+    });
+
+    $("refreshBtn").addEventListener("click", loadTasks);
+
+    // ====================================
+    // 6. STATUS LOGIN DAN HAK AKSES
+    // ====================================
+
+    onAuthStateChanged(auth, async user => {
+      currentUser = user;
+
+      $("appArea").classList.toggle("hidden", !user);
+      $("loginBtn").classList.toggle("hidden", !!user);
+      $("logoutBtn").classList.toggle("hidden", !user);
+
+      $("authStatus").textContent = user
+        ? `${user.displayName || "Mahasiswa"} · ${user.email}`
+        : "Belum login";
+
+      if (!user) {
+        currentRole = "mahasiswa";
+        return;
+      }
+
+      try {
+        const userSnap = await getDoc(
+          doc(db, "users", user.uid)
+        );
+
+        currentRole = userSnap.exists()
+          ? (userSnap.data().role || "mahasiswa")
+          : "mahasiswa";
+
+        $("roleLabel").textContent =
+          currentRole === "admin"
+            ? "Admin"
+            : currentRole === "ketua"
+              ? "Ketua kelompok"
+              : "Mahasiswa";
+
+        $("rolePill").textContent = currentRole;
+
+        $("adminPanel").classList.toggle(
+          "hidden",
+          currentRole !== "admin"
+        );
+
+        await loadTasks();
+
+      } catch (error) {
+        console.error("Gagal membaca profil:", error);
+
+        msg(
+          "Login berhasil, tetapi profil atau database " +
+          "belum dapat dibaca: " + error.message,
+          true
+        );
+      }
+    });
+
+    // ====================================
+    // 7. TAMBAH TUGAS OLEH ADMIN
+    // ====================================
+
+    $("taskForm").addEventListener("submit", async event => {
+      event.preventDefault();
+
+      if (!currentUser || currentRole !== "admin") {
+        msg("Hanya admin yang boleh menambahkan tugas.", true);
+        return;
+      }
+
+      try {
+        await addDoc(collection(db, "tasks"), {
+          title: $("taskTitle").value.trim(),
+          courseId: $("courseSelect").value,
+          type: $("taskType").value,
+          dueAt: new Date($("dueAt").value),
+          description: $("taskDescription").value.trim(),
+          createdBy: currentUser.uid,
+          createdAt: serverTimestamp()
+        });
+
+        event.target.reset();
+
+        msg("Tugas berhasil disimpan.");
+
+        await loadTasks();
+
+      } catch (error) {
+        console.error("Gagal menyimpan tugas:", error);
+
+        msg(
+          "Gagal menyimpan tugas: " + error.message,
+          true
+        );
+      }
+    });
+
+  } catch (error) {
+    console.error("Inisialisasi Firebase gagal:", error);
+
+    $("loginBtn").disabled = true;
+
+    msg(
+      "Firebase gagal diinisialisasi: " +
+      error.message,
+      true
+    );
   }
-async function updateProgress(taskId,oldStatus){
-  const choices=[["belum","Belum dikerjakan"],["dikerjakan","Sedang dikerjakan"],["selesai","Selesai"]];
-  const next=prompt("Pilih status dengan mengetik: belum, dikerjakan, atau selesai",oldStatus==="belum"?"dikerjakan":oldStatus==="dikerjakan"?"selesai":"belum");
-  if(!choices.some(c=>c[0]===next))return;
-  try{
-    const progressId=`${taskId}_${currentUser.uid}`;
-    await setDoc(doc(db,"task_progress",progressId),{taskId,userId:currentUser.uid,status:next,updatedAt:serverTimestamp()});
-    await loadTasks();
-  }catch(e){msg("Gagal memperbarui progres: "+e.message,true);}
 }
-function escapeHtml(v){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+
+// ========================================
+// 8. MEMUAT DAFTAR TUGAS DAN PROGRES
+// ========================================
+
+async function loadTasks() {
+  if (!db || !currentUser) return;
+
+  try {
+    const taskSnap = await getDocs(
+      query(
+        collection(db, "tasks"),
+        orderBy("dueAt", "asc")
+      )
+    );
+
+    const tasks = taskSnap.docs.map(item => ({
+      id: item.id,
+      ...item.data()
+    }));
+
+    $("taskCount").textContent = tasks.length;
+
+    const progressSnap = await getDocs(
+      collection(db, "task_progress")
+    );
+
+    const myProgress = new Map(
+      progressSnap.docs
+        .filter(item =>
+          item.data().userId === currentUser.uid
+        )
+        .map(item => [
+          item.data().taskId,
+          item.data()
+        ])
+    );
+
+    $("doneCount").textContent = [
+      ...myProgress.values()
+    ].filter(progress =>
+      progress.status === "selesai"
+    ).length;
+
+    $("tasksList").innerHTML = tasks.length
+      ? tasks.map(task => {
+          const progress = myProgress.get(task.id);
+          const status = progress?.status || "belum";
+
+          const due = task.dueAt?.toDate
+            ? task.dueAt.toDate()
+            : task.dueAt
+              ? new Date(task.dueAt)
+              : null;
+
+          const dueText =
+            due && !isNaN(due.getTime())
+              ? due.toLocaleString("id-ID")
+              : "Belum ditentukan";
+
+          const statusText =
+            status === "selesai"
+              ? "Selesai"
+              : status === "dikerjakan"
+                ? "Sedang dikerjakan"
+                : "Belum dikerjakan";
+
+          const statusIcon =
+            status === "selesai"
+              ? "✅"
+              : status === "dikerjakan"
+                ? "🟡"
+                : "🔴";
+
+          const statusClass =
+            status === "selesai"
+              ? "done"
+              : status === "dikerjakan"
+                ? "doing"
+                : "todo";
+
+          const course =
+            courses[Number(task.courseId) - 1] ||
+            "Mata kuliah";
+
+          return `
+            <article class="task">
+              <h3>${escapeHtml(task.title || "Tugas tanpa judul")}</h3>
+
+              <div class="muted">
+                ${escapeHtml(course)} ·
+                ${escapeHtml(task.type || "tugas")}
+              </div>
+
+              <p>${escapeHtml(task.description || "")}</p>
+
+              <p class="muted">
+                Tenggat: ${escapeHtml(dueText)}
+              </p>
+
+              <div class="actions">
+                <span class="status ${statusClass}">
+                  ${statusIcon} Status saya: ${statusText}
+                </span>
+
+                <button
+                  class="secondary"
+                  data-progress="${escapeHtml(task.id)}"
+                  data-status="${escapeHtml(status)}">
+                  Ubah progres
+                </button>
+              </div>
+            </article>
+          `;
+        }).join("")
+      : "<p class='muted'>Belum ada tugas yang dimasukkan.</p>";
+
+    document.querySelectorAll("[data-progress]").forEach(button => {
+      button.onclick = () =>
+        updateProgress(
+          button.dataset.progress,
+          button.dataset.status
+        );
+    });
+
+    msg("Data berhasil dimuat.");
+
+  } catch (error) {
+    console.error("Gagal memuat tugas/progres:", error);
+
+    msg(
+      "Gagal memuat tugas/progres. Kode: " +
+      (error.code || "unknown") +
+      " | Detail: " +
+      error.message,
+      true
+    );
+  }
+}
+
+
+// ========================================
+// 9. MEMPERBARUI PROGRES TUGAS
+// ========================================
+
+async function updateProgress(taskId, oldStatus) {
+  if (!currentUser || !db) return;
+
+  const choices = [
+    ["belum", "Belum dikerjakan"],
+    ["dikerjakan", "Sedang dikerjakan"],
+    ["selesai", "Selesai"]
+  ];
+
+  const defaultStatus =
+    oldStatus === "belum"
+      ? "dikerjakan"
+      : oldStatus === "dikerjakan"
+        ? "selesai"
+        : "belum";
+
+  const next = prompt(
+    "Pilih status dengan mengetik: " +
+    "belum, dikerjakan, atau selesai",
+    defaultStatus
+  );
+
+  if (!choices.some(choice => choice[0] === next)) {
+    return;
+  }
+
+  try {
+    const progressId = `${taskId}_${currentUser.uid}`;
+
+    await setDoc(
+      doc(db, "task_progress", progressId),
+      {
+        taskId,
+        userId: currentUser.uid,
+        status: next,
+        updatedAt: serverTimestamp()
+      }
+    );
+
+    await loadTasks();
+
+  } catch (error) {
+    console.error("Gagal memperbarui progres:", error);
+
+    msg(
+      "Gagal memperbarui progres: " +
+      error.message,
+      true
+    );
+  }
+}
 </script>
 </body>
 </html>
