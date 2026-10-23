@@ -192,7 +192,7 @@ footer{padding:30px;text-align:center;color:var(--muted);font-size:.85rem}
         <div class="card"><div class="muted">Sedang dikerjakan</div><h2 id="adminDoingCount" style="margin-top:4px;">0</h2></div>
         <div class="card"><div class="muted">Belum dikerjakan</div><h2 id="adminTodoCount" style="margin-top:4px;">0</h2></div>
       </div>
-      <h2 style="margin-top: 20px;">Progres Mahasiswa</h2>
+      <h2 style="margin-top: 20px;">Progres Mahasiswa per Mata Kuliah</h2>
       <div id="adminProgressList">
         <p class="muted">Data progres akan ditampilkan di sini.</p>
       </div>
@@ -239,6 +239,7 @@ footer{padding:30px;text-align:center;color:var(--muted);font-size:.85rem}
             <select id="taskTarget">
               <option value="semua">🌐 Semua Mahasiswa (Publik)</option>
               <option value="kelompok">👥 Khusus Tugas Kelompok</option>
+              <option value="tertentu">👤 Mahasiswa Tertentu (Pilih Orang)</option>
             </select>
           </div>
           <div>
@@ -247,7 +248,14 @@ footer{padding:30px;text-align:center;color:var(--muted);font-size:.85rem}
           </div>
         </div>
 
-        <label style="margin-top: 4px;">Instruksi / catatan</label>
+        <div id="specificStudentsContainer" class="hidden" style="margin-top: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg);">
+          <label style="margin-bottom: 6px; color: var(--blue);">Pilih Mahasiswa yang Berhak Menerima Tugas Ini:</label>
+          <div id="studentCheckboxes" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
+            <p class="muted">Memuat daftar mahasiswa...</p>
+          </div>
+        </div>
+
+        <label style="margin-top: 10px;">Instruksi / catatan</label>
         <textarea id="taskDescription" rows="2" maxlength="2000" placeholder="Petunjuk pengerjaan, format pengumpulan, dan lain-lain"></textarea>
         <button type="submit" id="submitTaskBtn" style="margin-top: 6px;">Simpan tugas</button>
       </form>
@@ -354,6 +362,7 @@ let currentUser = null;
 let currentRole = "mahasiswa";
 let editingTaskId = null;
 let allTasksData = [];
+let allStudentsList = [];
 
 const themeToggleBtn = $("themeToggleBtn");
 const currentTheme = localStorage.getItem("theme") || "light";
@@ -374,6 +383,10 @@ themeToggleBtn.addEventListener("click", () => {
     localStorage.setItem("theme", "dark");
     themeToggleBtn.textContent = "☀️ Mode Terang";
   }
+});
+
+$("taskTarget").addEventListener("change", (e) => {
+  $("specificStudentsContainer").classList.toggle("hidden", e.target.value !== "tertentu");
 });
 
 function showCourses() {
@@ -482,6 +495,7 @@ if (!isConfigured) {
         $("adminPanel").classList.toggle("hidden", currentRole !== "admin");
         $("adminDashboard").classList.toggle("hidden", currentRole !== "admin");
         
+        await loadStudentsForAdmin();
         await loadTasks();
         await loadSchedules();
         await loadAnnouncement();
@@ -507,10 +521,21 @@ if (!isConfigured) {
       }
     });
 
-    // Simpan Tugas Beserta Nomor PJMK Spesifik Tugas Tersebut
     $("taskForm").addEventListener("submit", async event => {
       event.preventDefault();
       if (!currentUser || currentRole !== "admin") return;
+
+      const target = $("taskTarget").value;
+      let selectedStudents = [];
+      if (target === "tertentu") {
+        document.querySelectorAll(".student-checkbox:checked").forEach(cb => {
+          selectedStudents.push(cb.value);
+        });
+        if (selectedStudents.length === 0) {
+          showToast("Pilih setidaknya satu mahasiswa untuk tugas tertentu!", true);
+          return;
+        }
+      }
 
       try {
         const btn = $("submitTaskBtn");
@@ -521,8 +546,9 @@ if (!isConfigured) {
           title: $("taskTitle").value.trim(),
           courseId: $("courseSelect").value,
           type: $("taskType").value,
-          target: $("taskTarget").value,
-          pjmkPhone: $("taskPjmkPhone").value.trim(), // Menyimpan nomor WA PJMK khusus tugas ini
+          target: target,
+          assignedTo: selectedStudents,
+          pjmkPhone: $("taskPjmkPhone").value.trim(),
           dueAt: new Date($("dueAt").value),
           description: $("taskDescription").value.trim()
         };
@@ -579,6 +605,25 @@ if (!isConfigured) {
   }
 }
 
+async function loadStudentsForAdmin() {
+  if (currentRole !== "admin") return;
+  try {
+    const snap = await getDocs(collection(db, "users"));
+    allStudentsList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(u => u.role === "mahasiswa");
+    
+    $("studentCheckboxes").innerHTML = allStudentsList.length
+      ? allStudentsList.map(s => `
+          <label style="display:flex; align-items:center; gap:8px; font-weight:normal; font-size:0.9rem; cursor:pointer;">
+            <input type="checkbox" class="student-checkbox" value="${s.id}" style="width:auto; margin:0;">
+            ${escapeHtml(s.displayName || "Mahasiswa")} (${escapeHtml(s.email || "")})
+          </label>
+        `).join("")
+      : "<p class='muted'>Belum ada akun mahasiswa yang terdaftar.</p>";
+  } catch (e) {
+    console.error("Gagal memuat daftar mahasiswa");
+  }
+}
+
 function resetFormToTambah() {
   $("taskForm").reset();
   editingTaskId = null;
@@ -586,7 +631,9 @@ function resetFormToTambah() {
   $("submitTaskBtn").textContent = "Simpan tugas";
   $("submitTaskBtn").disabled = false;
   $("cancelEditBtn").classList.add("hidden");
-  $("taskPjmkPhone").value = "628123456789"; // Reset default
+  $("taskPjmkPhone").value = "628123456789";
+  $("specificStudentsContainer").classList.add("hidden");
+  document.querySelectorAll(".student-checkbox").forEach(cb => cb.checked = false);
 }
 
 async function loadAnnouncement() {
@@ -604,6 +651,7 @@ async function loadAnnouncement() {
   }
 }
 
+// DASHBOARD ADMIN DIPERBARUI: Dikelompokkan rapi per Mata Kuliah
 async function loadAdminDashboard() {
   if (!db || !currentUser || currentRole !== "admin") return;
   try {
@@ -632,27 +680,82 @@ async function loadAdminDashboard() {
     $("adminTodoCount").textContent = todo;
 
     const studentMap = new Map(students.map(student => [student.id, student.data().displayName || "Mahasiswa"]));
-    const taskMap = new Map(tasks.map(task => [task.id, task]));
+    
+    // Kelompokkan tugas berdasarkan courseId
+    const tasksByCourse = {};
+    courses.forEach((c, idx) => {
+      tasksByCourse[String(idx + 1)] = { courseName: c, tasks: [] };
+    });
 
-    $("adminProgressList").innerHTML = validProgress.length
-      ? validProgress.map(progress => {
-          const studentName = studentMap.get(progress.userId) || "Mahasiswa";
-          const task = taskMap.get(progress.taskId);
-          const taskTitle = task?.title || "Tugas tidak ditemukan";
-          const statusText = progress.status === "selesai" ? "Selesai" : progress.status === "dikerjakan" ? "Sedang dikerjakan" : "Belum dikerjakan";
-          const statusIcon = progress.status === "selesai" ? "✅" : progress.status === "dikerjakan" ? "🟡" : "🔴";
+    tasks.forEach(task => {
+      if (tasksByCourse[task.courseId]) {
+        tasksByCourse[task.courseId].tasks.push(task);
+      }
+    });
+
+    // Buat map status progres: "taskId_userId" -> status
+    const progressMap = new Map(validProgress.map(p => [`${p.taskId}_${p.userId}`, p.status]));
+
+    let htmlOutput = "";
+
+    Object.keys(tasksByCourse).forEach(courseId => {
+      const courseGroup = tasksByCourse[courseId];
+      if (courseGroup.tasks.length === 0) return; // Lewati matkul yang tidak ada tugas
+
+      htmlOutput += `
+        <div style="background:var(--bg); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:14px;">
+          <h3 style="margin:0 0 10px; font-size:1rem; color:var(--blue); display:flex; align-items:center; gap:8px;">
+            📚 ${escapeHtml(courseGroup.courseName)} <span class="pill" style="font-size:0.7rem;">${courseGroup.tasks.length} Tugas</span>
+          </h3>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+      `;
+
+      courseGroup.tasks.forEach(task => {
+        htmlOutput += `
+          <div style="background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px;">
+            <div style="font-weight:600; font-size:0.9rem; margin-bottom:6px;">📌 ${escapeHtml(task.title)}</div>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+        `;
+
+        students.forEach(student => {
+          const studentName = studentMap.get(student.id) || "Mahasiswa";
+          const status = progressMap.get(`${task.id}_${student.id}`) || "belum";
           
-          return `
-            <article class="task">
-              <h3 style="margin-bottom:4px; font-size:1rem;">${escapeHtml(studentName)}</h3>
-              <p style="margin:0 0 8px; font-size:0.9rem;">${escapeHtml(taskTitle)}</p>
-              <span class="status" style="background:var(--line); padding:4px 8px; border-radius:6px; display:inline-block;">
-                ${statusIcon} ${escapeHtml(statusText)}
-              </span>
-            </article>
+          let badgeBg = "rgba(220, 38, 38, 0.1)";
+          let badgeColor = "var(--red)";
+          let icon = "🔴";
+          
+          if (status === "selesai") {
+            badgeBg = "rgba(22, 163, 74, 0.1)";
+            badgeColor = "var(--green)";
+            icon = "✅";
+          } else if (status === "dikerjakan") {
+            badgeBg = "rgba(217, 119, 6, 0.1)";
+            badgeColor = "var(--amber)";
+            icon = "🟡";
+          }
+
+          htmlOutput += `
+            <span style="background:${badgeBg}; color:${badgeColor}; padding:4px 8px; border-radius:8px; font-size:0.75rem; font-weight:600; display:inline-flex; align-items:center; gap:4px;" title="${studentName}: ${status}">
+              ${icon} ${escapeHtml(studentName)}
+            </span>
           `;
-        }).join("")
-      : "<p class='muted'>Belum ada progres mahasiswa.</p>";
+        });
+
+        htmlOutput += `
+            </div>
+          </div>
+        `;
+      });
+
+      htmlOutput += `
+          </div>
+        </div>
+      `;
+    });
+
+    $("adminProgressList").innerHTML = htmlOutput || "<p class='muted'>Belum ada tugas atau mahasiswa yang terdaftar.</p>";
+
   } catch (error) {
     showToast("Dashboard Admin gagal dimuat: " + error.message, true);
   }
@@ -714,25 +817,34 @@ async function loadTasks() {
   try {
     const taskSnap = await getDocs(query(collection(db, "tasks"), orderBy("dueAt", "asc")));
     const tasks = taskSnap.docs.map(item => ({ id: item.id, ...item.data() }));
+
+    const visibleTasks = tasks.filter(task => {
+      if (currentRole === "admin") return true;
+      if (!task.target || task.target === "semua") return true;
+      if (task.target === "tertentu") {
+        return task.assignedTo && task.assignedTo.includes(currentUser.uid);
+      }
+      return true;
+    });
     
     allTasksData = tasks;
-    $("taskCount").textContent = tasks.length;
+    $("taskCount").textContent = visibleTasks.length;
     
     const progressQuery = query(collection(db, "task_progress"), where("userId", "==", currentUser.uid));
     const progressSnap = await getDocs(progressQuery);
     const myProgress = new Map(progressSnap.docs.map(item => [item.data().taskId, item.data()]));
 
     const completedCount = [...myProgress.values()].filter(progress => progress.status === "selesai").length;
-    $("doneCount").textContent = `${completedCount} dari ${tasks.length}`;
+    $("doneCount").textContent = `${completedCount} dari ${visibleTasks.length}`;
 
-    const percent = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
+    const percent = visibleTasks.length > 0 ? Math.round((completedCount / visibleTasks.length) * 100) : 0;
     $("progressPercent").textContent = `${percent}%`;
     $("progressBar").style.width = `${percent}%`;
 
     const activeTasks = [];
     const completedTasks = [];
 
-    tasks.forEach(task => {
+    visibleTasks.forEach(task => {
       const progress = myProgress.get(task.id);
       const status = progress?.status || "belum";
       if (status === "selesai") {
@@ -756,13 +868,12 @@ async function loadTasks() {
           const course = courses[Number(task.courseId) - 1] || "Mata kuliah";
           const filterCategoryClass = status === "selesai" ? "task-done completed-task" : "task-active";
 
-          const targetBadge = task.target === "kelompok" 
-            ? `<span class="pill" style="background:rgba(217, 119, 6, 0.1); color:var(--amber);">👥 Kelompok</span>` 
-            : `<span class="pill">🌐 Semua</span>`;
+          let targetBadge = `<span class="pill">🌐 Semua</span>`;
+          if (task.target === "kelompok") targetBadge = `<span class="pill" style="background:rgba(217, 119, 6, 0.1); color:var(--amber);">👥 Kelompok</span>`;
+          else if (task.target === "tertentu") targetBadge = `<span class="pill" style="background:rgba(147, 51, 234, 0.1); color:#9333ea;">👤 Khusus Anda</span>`;
 
           const gcalUrl = generateGoogleCalendarUrl(task.title, course, due, task.description);
 
-          // Menggunakan nomor WA PJMK yang spesifik tersimpan di masing-masing tugas
           const taskPjmkPhone = task.pjmkPhone || "628123456789";
           const waMessage = encodeURIComponent(`Assalamu'alaikum, mau bertanya terkait tugas [${course}] "${task.title}".`);
           const waUrl = `https://wa.me/${taskPjmkPhone}?text=${waMessage}`;
@@ -818,11 +929,11 @@ async function loadTasks() {
             </article>
           `;
         }).join("")
-      : "<p class='muted'>Hore! Belum ada tugas saat ini.</p>";
+      : "<p class='muted'>Hore! Belum ada tugas khusus saat ini.</p>";
 
     document.querySelectorAll("[data-progress]").forEach(button => {
       button.onclick = () => updateProgress(button.dataset.progress, button.dataset.status);
-    });
+      });
 
     if (currentRole === "admin") {
       document.querySelectorAll("[data-edit]").forEach(btn => {
@@ -876,15 +987,20 @@ function triggerEditTask(taskId) {
   $("courseSelect").value = task.courseId || "1";
   $("taskType").value = task.type || "individu";
   $("taskTarget").value = task.target || "semua";
-  $("taskPjmkPhone").value = task.pjmkPhone || "628123456789"; // Mengisi nomor WA PJMK khusus tugas ini
+  $("taskPjmkPhone").value = task.pjmkPhone || "628123456789";
   $("taskDescription").value = task.description || "";
+
+  const isTertentu = task.target === "tertentu";
+  $("specificStudentsContainer").classList.toggle("hidden", !isTertentu);
+  document.querySelectorAll(".student-checkbox").forEach(cb => {
+    cb.checked = isTertentu && task.assignedTo && task.assignedTo.includes(cb.value);
+  });
 
   if (task.dueAt) {
     const d = task.dueAt.toDate ? task.dueAt.toDate() : new Date(task.dueAt);
     if (!isNaN(d.getTime())) {
       const tzOffset = d.getTimezoneOffset() * 60000;
       const localISOTime = (new Date(d.getTime() - tzOffset)).toISOString().slice(0, 16);
-      $("dueAt.value", localISOTime);
       $("dueAt").value = localISOTime;
     }
   }
