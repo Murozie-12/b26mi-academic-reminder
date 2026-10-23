@@ -805,7 +805,7 @@ async function loadTasks() {
                   </div>
                 </div>
                 <div class="actions">
-                  <span class="status ${statusStatus || statusClass}" style="margin-right:8px; padding: 6px 10px; border-radius: 8px; background: var(--line);">
+                  <span class="status ${statusClass}" style="margin-right:8px; padding: 6px 10px; border-radius: 8px; background: var(--line);">
                     ${statusIcon} ${statusText}
                   </span>
                   <button class="secondary" data-progress="${escapeHtml(task.id)}" data-status="${escapeHtml(status)}">
