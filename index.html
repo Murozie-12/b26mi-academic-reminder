@@ -6,21 +6,57 @@
 <title>B26MI — Academic Reminder</title>
 <style>
 :root{--bg:#f4f7fb;--card:#fff;--ink:#172033;--muted:#64748b;--blue:#2457d6;--green:#16834a;--amber:#a86400;--red:#b42318;--line:#e4eaf2}
-*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
-header{background:#14264b;color:#fff;padding:18px 16px}header h1{font-size:1.2rem;margin:0 0 4px}header p{margin:0;color:#d7e2ff;font-size:.9rem}
-main{max-width:1050px;margin:auto;padding:16px}.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 2px 8px #1d35570a;margin-bottom:12px}
-h2{font-size:1.05rem;margin:0 0 12px}.muted{color:var(--muted);font-size:.92rem}.pill{display:inline-block;border-radius:999px;padding:4px 9px;font-size:.8rem;background:#eef3ff;color:#214db8}
-button,input,select,textarea{font:inherit}button{border:0;border-radius:10px;background:var(--blue);color:#fff;padding:10px 13px;cursor:pointer;font-weight:600}button.secondary{background:#e9eef7;color:#1f2a44}button.danger{background:#fff0ee;color:var(--red)}button:disabled{opacity:.5;cursor:not-allowed}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:#14264b;color:#fff;padding:18px 16px}
+header h1{font-size:1.2rem;margin:0 0 4px}
+header p{margin:0;color:#d7e2ff;font-size:.9rem}
+main{max-width:1050px;margin:auto;padding:16px}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 2px 8px #1d35570a;margin-bottom:12px}
+h2{font-size:1.05rem;margin:0 0 12px}
+.muted{color:var(--muted);font-size:.92rem}
+.pill{display:inline-block;border-radius:999px;padding:4px 9px;font-size:.8rem;background:#eef3ff;color:#214db8}
+
+/* Styling Form & Tombol dengan efek Hover/Focus */
+button,input,select,textarea{font:inherit; transition: all 0.2s ease;}
+button{border:0;border-radius:10px;background:var(--blue);color:#fff;padding:10px 13px;cursor:pointer;font-weight:600}
+button.secondary{background:#e9eef7;color:#1f2a44}
+button.danger{background:#fff0ee;color:var(--red)}
+button:disabled{opacity:.5;cursor:not-allowed}
+button:hover:not(:disabled) {filter: brightness(0.95); transform: translateY(-1px);}
+button:active:not(:disabled) {transform: translateY(0);}
+
 input,select,textarea{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:9px;background:white;color:var(--ink);margin:5px 0 10px}
-label{font-size:.88rem;font-weight:600;display:block}.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
-.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.task{border:1px solid var(--line);border-radius:12px;padding:12px;margin:9px 0;background:#fff}.task h3{margin:0 0 6px;font-size:1rem}.status{font-size:.83rem;font-weight:700}.done{color:var(--green)}.doing{color:var(--amber)}.todo{color:var(--red)}
-.notice{padding:12px;border-radius:10px;background:#fff8e6;border:1px solid #f1d58b;color:#714d00;font-size:.9rem}
-.hidden{display:none!important}footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
+input:focus, select:focus, textarea:focus {border-color: var(--blue); outline: none; box-shadow: 0 0 0 3px rgba(36, 87, 214, 0.15);}
+
+label{font-size:.88rem;font-weight:600;display:block}
+.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* Styling Kartu Tugas */
+.task{border:1px solid var(--line);border-radius:12px;padding:16px;margin:9px 0;background:#fff; transition: box-shadow 0.2s ease;}
+.task:hover{box-shadow: 0 4px 12px rgba(29, 53, 87, 0.08);}
+.task h3{margin:0 0 6px;font-size:1.1rem}
+.status{font-size:.85rem;font-weight:700}
+.done{color:var(--green)}
+.doing{color:var(--amber)}
+.todo{color:var(--red)}
+
+.notice{padding:12px;border-radius:10px;background:#fff8e6;border:1px solid #f1d58b;color:#714d00;font-size:.9rem; margin-bottom: 12px;}
+.hidden{display:none!important}
+footer{padding:22px;text-align:center;color:var(--muted);font-size:.8rem}
 </style>
 </head>
 <body>
-<header><h1>B26MI — Academic Reminder</h1><p>Pengingat tugas, presentasi, dan progres akademik</p></header>
+<header>
+  <h1>B26MI — Academic Reminder</h1>
+  <p>Pengingat tugas, presentasi, dan progres akademik</p>
+</header>
 <main>
+  <!-- Notifikasi dipindah ke atas agar mudah terlihat -->
+  <div id="message" class="notice">Sebelum digunakan kelas, admin harus mengisi konfigurasi Firebase dan menerapkan aturan Firestore yang aman. Jangan mengaktifkan aturan publik.</div>
+  
   <section class="card">
     <div class="actions" style="justify-content:space-between">
       <div><h2>Selamat datang di B26MI</h2><div id="authStatus" class="muted">Belum login</div></div>
@@ -29,41 +65,24 @@ label{font-size:.88rem;font-weight:600;display:block}.formgrid{display:grid;grid
     </div>
     <p class="muted">Starter awal. Setelah konfigurasi Firebase dan aturan keamanan dipasang, data dapat digunakan bersama oleh kelas.</p>
   </section>
+
   <div id="appArea" class="hidden">
     <div class="row">
       <section class="card"><div class="muted">Tugas terlihat</div><h2 id="taskCount">0</h2></section>
       <section class="card"><div class="muted">Tugas selesai oleh saya</div><h2 id="doneCount">0</h2></section>
       <section class="card"><div class="muted">Peran akun</div><h2 id="roleLabel">Mahasiswa</h2><span id="rolePill" class="pill">mahasiswa</span></section>
     </div>
-<!-- DASHBOARD ADMIN -->
-<section id="adminDashboard" class="card hidden">
-  <h2>Dashboard Admin</h2>
-  <p class="muted">Ringkasan aktivitas akademik mahasiswa.</p>
+
+    <!-- DASHBOARD ADMIN -->
+    <section id="adminDashboard" class="card hidden">
+      <h2>Dashboard Admin</h2>
+      <p class="muted">Ringkasan aktivitas akademik mahasiswa.</p>
       <div class="row">
-        <div class="card">
-          <div class="muted">Total mahasiswa</div>
-          <h2 id="adminStudentCount">0</h2>
-        </div>
-
-        <div class="card">
-          <div class="muted">Total tugas</div>
-          <h2 id="adminTaskCount">0</h2>
-        </div>
-
-        <div class="card">
-          <div class="muted">Progres selesai</div>
-          <h2 id="adminDoneCount">0</h2>
-        </div>
-
-        <div class="card">
-          <div class="muted">Sedang dikerjakan</div>
-          <h2 id="adminDoingCount">0</h2>
-        </div>
-
-        <div class="card">
-          <div class="muted">Belum dikerjakan</div>
-          <h2 id="adminTodoCount">0</h2>
-        </div>
+        <div class="card"><div class="muted">Total mahasiswa</div><h2 id="adminStudentCount">0</h2></div>
+        <div class="card"><div class="muted">Total tugas</div><h2 id="adminTaskCount">0</h2></div>
+        <div class="card"><div class="muted">Progres selesai</div><h2 id="adminDoneCount">0</h2></div>
+        <div class="card"><div class="muted">Sedang dikerjakan</div><h2 id="adminDoingCount">0</h2></div>
+        <div class="card"><div class="muted">Belum dikerjakan</div><h2 id="adminTodoCount">0</h2></div>
       </div>
 
       <h2>Progres Mahasiswa</h2>
@@ -75,25 +94,17 @@ label{font-size:.88rem;font-weight:600;display:block}.formgrid{display:grid;grid
     <!-- PANEL TAMBAH TUGAS ADMIN -->
     <section id="adminPanel" class="card hidden">
       <h2>Panel Admin — Tambahkan tugas</h2>
-
-      <p class="muted">
-        Hanya akun yang sudah ditetapkan sebagai Admin
-        di Firestore yang boleh membuat tugas.
-      </p>
-
+      <p class="muted">Hanya akun yang sudah ditetapkan sebagai Admin di Firestore yang boleh membuat tugas.</p>
       <form id="taskForm">
         <div class="formgrid">
           <div>
             <label>Nama tugas</label>
-            <input id="taskTitle" required maxlength="120"
-              placeholder="Contoh: Presentasi proposal">
+            <input id="taskTitle" required maxlength="120" placeholder="Contoh: Presentasi proposal">
           </div>
-
           <div>
             <label>Mata kuliah</label>
             <select id="courseSelect" required></select>
           </div>
-
           <div>
             <label>Jenis</label>
             <select id="taskType">
@@ -105,17 +116,13 @@ label{font-size:.88rem;font-weight:600;display:block}.formgrid{display:grid;grid
               <option value="uas">UAS</option>
             </select>
           </div>
-
           <div>
             <label>Tenggat</label>
             <input id="dueAt" type="datetime-local" required>
           </div>
         </div>
-
         <label>Instruksi / catatan</label>
-        <textarea id="taskDescription" rows="2" maxlength="2000"
-          placeholder="Petunjuk pengerjaan, format pengumpulan, dan lain-lain"></textarea>
-
+        <textarea id="taskDescription" rows="2" maxlength="2000" placeholder="Petunjuk pengerjaan, format pengumpulan, dan lain-lain"></textarea>
         <button type="submit">Simpan tugas</button>
       </form>
     </section>
@@ -126,22 +133,16 @@ label{font-size:.88rem;font-weight:600;display:block}.formgrid{display:grid;grid
         <h2>Daftar tugas</h2>
         <button id="refreshBtn" class="secondary">Muat ulang</button>
       </div>
-
       <div id="tasksList">
         <p class="muted">Memuat tugas…</p>
       </div>
     </section>
   </div>
-  <div id="message" class="notice">Sebelum digunakan kelas, admin harus mengisi konfigurasi Firebase dan menerapkan aturan Firestore yang aman. Jangan mengaktifkan aturan publik.</div>
 </main>
 <footer>B26MI — Academic Reminder · Versi starter</footer>
+
 <script type="module">
-/*
-LANGKAH KONFIGURASI:
-1. Buka Project settings > General > Your apps > Web app.
-2. Salin konfigurasi Firebase dan ganti nilai di bawah.
-3. Jangan bagikan token privat; Firebase web config bukan kata sandi, tetapi aturan database tetap wajib aman.
-*/import {
+import {
   initializeApp
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 
@@ -170,7 +171,6 @@ import {
 // ========================================
 // 1. KONFIGURASI FIREBASE
 // ========================================
-
 const firebaseConfig = {
   apiKey: "AIzaSyBsVOWrSKNO42A3vJ_baQNs1QoLhiBt3M0",
   authDomain: "b26mi-academic-reminder.firebaseapp.com",
@@ -183,10 +183,10 @@ const firebaseConfig = {
 // ========================================
 // 2. VARIABEL DAN FUNGSI DASAR
 // ========================================
-
 const $ = id => document.getElementById(id);
 
 const msg = (text, warn = false) => {
+  $("message").style.display = "block";
   $("message").textContent = text;
   $("message").className = warn ? "notice" : "muted";
 };
@@ -212,9 +212,7 @@ let currentRole = "mahasiswa";
 
 function showCourses() {
   $("courseSelect").innerHTML = courses
-    .map((course, i) =>
-      `<option value="${i + 1}">${escapeHtml(course)}</option>`
-    )
+    .map((course, i) => `<option value="${i + 1}">${escapeHtml(course)}</option>`)
     .join("");
 }
   
@@ -230,11 +228,9 @@ function escapeHtml(value) {
 
 showCourses();
 
-
 // ========================================
 // 3. VALIDASI DAN INISIALISASI FIREBASE
 // ========================================
-
 const isConfigured =
   Boolean(firebaseConfig.apiKey) &&
   Boolean(firebaseConfig.authDomain) &&
@@ -247,13 +243,7 @@ const isConfigured =
 
 if (!isConfigured) {
   $("loginBtn").disabled = true;
-
-  msg(
-    "Konfigurasi Firebase belum lengkap. " +
-    "Periksa apiKey, authDomain, projectId, dan appId.",
-    true
-  );
-
+  msg("Konfigurasi Firebase belum lengkap. Periksa apiKey, authDomain, projectId, dan appId.", true);
 } else {
   try {
     app = initializeApp(firebaseConfig);
@@ -261,40 +251,30 @@ if (!isConfigured) {
     db = getFirestore(app);
 
     $("loginBtn").disabled = false;
-
-    msg("Firebase berhasil diinisialisasi.");
+    // Sembunyikan pesan awal jika firebase sudah OK
+    $("message").style.display = "none"; 
 
     // ====================================
     // 4. LOGIN GOOGLE
     // ====================================
-
-$("loginBtn").addEventListener("click", async () => {
-  const provider = new GoogleAuthProvider();
-
-  try {
-    await signInWithPopup(auth, provider);
-    msg("Login Google berhasil!", false);
-  } catch (error) {
-    console.error("Login gagal:", error);
-
-    msg(
-      "Login gagal: " +
-      (error.code || "unknown") +
-      " | " +
-      error.message,
-      true
-    );
-  }
-});
+    $("loginBtn").addEventListener("click", async () => {
+      const provider = new GoogleAuthProvider();
+      try {
+        await signInWithPopup(auth, provider);
+        $("message").style.display = "none";
+      } catch (error) {
+        console.error("Login gagal:", error);
+        msg("Login gagal: " + (error.code || "unknown") + " | " + error.message, true);
+      }
+    });
 
     // ====================================
     // 5. LOGOUT DAN MUAT ULANG
     // ====================================
-
     $("logoutBtn").addEventListener("click", async () => {
       try {
         await signOut(auth);
-        msg("Kamu berhasil keluar.");
+        msg("Kamu berhasil keluar.", false);
       } catch (error) {
         msg("Gagal logout: " + error.message, true);
       }
@@ -305,7 +285,6 @@ $("loginBtn").addEventListener("click", async () => {
     // ====================================
     // 6. STATUS LOGIN DAN HAK AKSES
     // ====================================
-
     onAuthStateChanged(auth, async user => {
       currentUser = user;
 
@@ -324,69 +303,53 @@ $("loginBtn").addEventListener("click", async () => {
 
       try {
         const userRef = doc(db, "users", user.uid);
-const userSnap = await getDoc(userRef);
+        const userSnap = await getDoc(userRef);
 
-if (!userSnap.exists()) {
-  await setDoc(userRef, {
-    displayName: user.displayName || "Mahasiswa",
-    email: user.email || "",
-    role: "mahasiswa",
-    createdAt: serverTimestamp()
-  });
-
-  currentRole = "mahasiswa";
-} else {
-  currentRole = userSnap.data().role || "mahasiswa";
-}
+        if (!userSnap.exists()) {
+          await setDoc(userRef, {
+            displayName: user.displayName || "Mahasiswa",
+            email: user.email || "",
+            role: "mahasiswa",
+            createdAt: serverTimestamp()
+          });
+          currentRole = "mahasiswa";
+        } else {
+          currentRole = userSnap.data().role || "mahasiswa";
+        }
 
         $("roleLabel").textContent =
-          currentRole === "admin"
-            ? "Admin"
-            : currentRole === "ketua"
-              ? "Ketua kelompok"
-              : "Mahasiswa";
+          currentRole === "admin" ? "Admin" : currentRole === "ketua" ? "Ketua kelompok" : "Mahasiswa";
 
         $("rolePill").textContent = currentRole;
-
-        $("adminPanel").classList.toggle(
-          "hidden",
-          currentRole !== "admin"
-        );
-        $("adminDashboard").classList.toggle(
-  "hidden",
-  currentRole !== "admin"
-);
+        $("adminPanel").classList.toggle("hidden", currentRole !== "admin");
+        $("adminDashboard").classList.toggle("hidden", currentRole !== "admin");
         
-await loadTasks();
-
-if (currentRole === "admin") {
-  await loadAdminDashboard();
-}
+        await loadTasks();
+        if (currentRole === "admin") {
+          await loadAdminDashboard();
+        }
 
       } catch (error) {
         console.error("Gagal membaca profil:", error);
-
-        msg(
-          "Login berhasil, tetapi profil atau database " +
-          "belum dapat dibaca: " + error.message,
-          true
-        );
+        msg("Login berhasil, tetapi profil atau database belum dapat dibaca: " + error.message, true);
       }
     });
 
     // ====================================
     // 7. TAMBAH TUGAS OLEH ADMIN
     // ====================================
-
     $("taskForm").addEventListener("submit", async event => {
       event.preventDefault();
-
       if (!currentUser || currentRole !== "admin") {
         msg("Hanya admin yang boleh menambahkan tugas.", true);
         return;
       }
 
       try {
+        const btn = event.target.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.textContent = "Menyimpan...";
+
         await addDoc(collection(db, "tasks"), {
           title: $("taskTitle").value.trim(),
           courseId: $("courseSelect").value,
@@ -398,370 +361,198 @@ if (currentRole === "admin") {
         });
 
         event.target.reset();
-
-        msg("Tugas berhasil disimpan.");
-
+        msg("Tugas berhasil disimpan.", false);
+        
         await loadTasks();
+        if (currentRole === "admin") {
+          await loadAdminDashboard();
+        }
 
-if (currentRole === "admin") {
-  await loadAdminDashboard();
-}
-
+        btn.disabled = false;
+        btn.textContent = "Simpan tugas";
+        
+        // Sembunyikan notif sukses setelah 3 detik
+        setTimeout(() => { $("message").style.display = "none"; }, 3000);
       } catch (error) {
         console.error("Gagal menyimpan tugas:", error);
-
-        msg(
-          "Gagal menyimpan tugas: " + error.message,
-          true
-        );
+        msg("Gagal menyimpan tugas: " + error.message, true);
       }
     });
 
   } catch (error) {
     console.error("Inisialisasi Firebase gagal:", error);
-
     $("loginBtn").disabled = true;
-
-    msg(
-      "Firebase gagal diinisialisasi: " +
-      error.message,
-      true
-    );
+    msg("Firebase gagal diinisialisasi: " + error.message, true);
   }
 }
 
 // ========================================
 // DASHBOARD ADMIN
 // ========================================
-
 async function loadAdminDashboard() {
-  if (!db || !currentUser || currentRole !== "admin") {
-    return;
-  }
+  if (!db || !currentUser || currentRole !== "admin") return;
 
   try {
-    // 1. Ambil daftar mahasiswa
-    const usersSnap = await getDocs(
-      collection(db, "users")
-    );
-
-    const students = usersSnap.docs.filter(
-      item => item.data().role === "mahasiswa"
-    );
-
+    const usersSnap = await getDocs(collection(db, "users"));
+    const students = usersSnap.docs.filter(item => item.data().role === "mahasiswa");
     $("adminStudentCount").textContent = students.length;
 
-    // 2. Ambil daftar tugas
-    const tasksSnap = await getDocs(
-      collection(db, "tasks")
-    );
-
-    const tasks = tasksSnap.docs.map(item => ({
-      id: item.id,
-      ...item.data()
-    }));
-
+    const tasksSnap = await getDocs(collection(db, "tasks"));
+    const tasks = tasksSnap.docs.map(item => ({ id: item.id, ...item.data() }));
     $("adminTaskCount").textContent = tasks.length;
 
-    // 3. Ambil seluruh progres
-    const progressSnap = await getDocs(
-      collection(db, "task_progress")
-    );
+    const progressSnap = await getDocs(collection(db, "task_progress"));
+    const progressDocs = progressSnap.docs.map(item => ({ id: item.id, ...item.data() }));
 
-    const progressDocs = progressSnap.docs.map(item => ({
-      id: item.id,
-      ...item.data()
-    }));
+    const studentIds = new Set(students.map(student => student.id));
+    const validProgress = progressDocs.filter(progress => studentIds.has(progress.userId));
 
-    // Hanya hitung progres milik mahasiswa yang terdaftar
-    const studentIds = new Set(
-      students.map(student => student.id)
-    );
-
-    const validProgress = progressDocs.filter(
-      progress => studentIds.has(progress.userId)
-    );
-
-    const completed = validProgress.filter(
-      progress => progress.status === "selesai"
-    ).length;
-
-    const doing = validProgress.filter(
-      progress => progress.status === "dikerjakan"
-    ).length;
-
-    // Asumsi: semua tugas berlaku untuk semua mahasiswa.
-    // Hitung pasangan mahasiswa-tugas yang belum selesai dikerjakan.
+    const completed = validProgress.filter(progress => progress.status === "selesai").length;
+    const doing = validProgress.filter(progress => progress.status === "dikerjakan").length;
+    
     const totalExpected = students.length * tasks.length;
-
-    const todo = Math.max(
-      0,
-      totalExpected - completed - doing
-    );
+    const todo = Math.max(0, totalExpected - completed - doing);
 
     $("adminDoneCount").textContent = completed;
     $("adminDoingCount").textContent = doing;
     $("adminTodoCount").textContent = todo;
 
-    // 4. Siapkan data untuk tabel progres
-    const studentMap = new Map(
-      students.map(student => [
-        student.id,
-        student.data().displayName ||
-          student.data().email ||
-          "Mahasiswa"
-      ])
-    );
+    const studentMap = new Map(students.map(student => [
+      student.id, student.data().displayName || student.data().email || "Mahasiswa"
+    ]));
+    const taskMap = new Map(tasks.map(task => [task.id, task]));
 
-    const taskMap = new Map(
-      tasks.map(task => [task.id, task])
-    );
-
-    // Tampilkan progres yang sudah memiliki dokumen
-    $("adminProgressList").innerHTML =
-      validProgress.length
-        ? validProgress.map(progress => {
-            const studentName =
-              studentMap.get(progress.userId) ||
-              "Mahasiswa";
-
-            const task = taskMap.get(progress.taskId);
-
-            const taskTitle =
-              task?.title || "Tugas tidak ditemukan";
-
-            const statusText =
-              progress.status === "selesai"
-                ? "Selesai"
-                : progress.status === "dikerjakan"
-                  ? "Sedang dikerjakan"
-                  : "Belum dikerjakan";
-
-            return `
-              <article class="task">
-                <h3>${escapeHtml(studentName)}</h3>
-                <p>${escapeHtml(taskTitle)}</p>
-                <span class="status">
-                  ${escapeHtml(statusText)}
-                </span>
-              </article>
-            `;
-          }).join("")
-        : "<p class='muted'>Belum ada progres mahasiswa.</p>";
+    $("adminProgressList").innerHTML = validProgress.length
+      ? validProgress.map(progress => {
+          const studentName = studentMap.get(progress.userId) || "Mahasiswa";
+          const task = taskMap.get(progress.taskId);
+          const taskTitle = task?.title || "Tugas tidak ditemukan";
+          const statusText = progress.status === "selesai" ? "Selesai" : progress.status === "dikerjakan" ? "Sedang dikerjakan" : "Belum dikerjakan";
+          const statusIcon = progress.status === "selesai" ? "✅" : progress.status === "dikerjakan" ? "🟡" : "🔴";
+          
+          return `
+            <article class="task">
+              <h3 style="margin-bottom:4px;">${escapeHtml(studentName)}</h3>
+              <p style="margin:0 0 8px;">${escapeHtml(taskTitle)}</p>
+              <span class="status" style="background:#f1f5f9; padding:4px 8px; border-radius:6px; display:inline-block;">
+                ${statusIcon} ${escapeHtml(statusText)}
+              </span>
+            </article>
+          `;
+        }).join("")
+      : "<p class='muted'>Belum ada progres mahasiswa.</p>";
 
   } catch (error) {
     console.error("Gagal memuat dashboard admin:", error);
-
-    msg(
-      "Dashboard Admin gagal dimuat: " +
-      (error.code || "unknown") +
-      " | " + error.message,
-      true
-    );
+    msg("Dashboard Admin gagal dimuat: " + (error.code || "unknown") + " | " + error.message, true);
   }
-        }
+}
+
 // ========================================
 // 8. MEMUAT DAFTAR TUGAS DAN PROGRES
 // ========================================
-  async function loadTasks() {
+async function loadTasks() {
   if (!db || !currentUser) return;
 
   try {
-    // Ambil daftar tugas.
-    const taskSnap = await getDocs(
-      query(
-        collection(db, "tasks"),
-        orderBy("dueAt", "asc")
-      )
-    );
-
-    const tasks = taskSnap.docs.map(item => ({
-      id: item.id,
-      ...item.data()
-    }));
-
+    const taskSnap = await getDocs(query(collection(db, "tasks"), orderBy("dueAt", "asc")));
+    const tasks = taskSnap.docs.map(item => ({ id: item.id, ...item.data() }));
     $("taskCount").textContent = tasks.length;
     
-// Ambil progres milik pengguna yang sedang login.
-const progressQuery = query(
-  collection(db, "task_progress"),
-  where("userId", "==", currentUser.uid)
-);
+    const progressQuery = query(collection(db, "task_progress"), where("userId", "==", currentUser.uid));
+    const progressSnap = await getDocs(progressQuery);
+    const myProgress = new Map(progressSnap.docs.map(item => [item.data().taskId, item.data()]));
 
-const progressSnap = await getDocs(progressQuery);
+    $("doneCount").textContent = [...myProgress.values()].filter(progress => progress.status === "selesai").length;
 
-const myProgress = new Map(
-  progressSnap.docs.map(item => [
-    item.data().taskId,
-    item.data()
-  ])
-);
-
-    // Hitung jumlah tugas yang selesai.
-    $("doneCount").textContent = [
-      ...myProgress.values()
-    ].filter(progress =>
-      progress.status === "selesai"
-    ).length;
-
-    // Tampilkan tugas.
     $("tasksList").innerHTML = tasks.length
       ? tasks.map(task => {
           const progress = myProgress.get(task.id);
           const status = progress?.status || "belum";
-
-          const due = task.dueAt?.toDate
-            ? task.dueAt.toDate()
-            : task.dueAt
-              ? new Date(task.dueAt)
-              : null;
-
-          const dueText =
-            due && !isNaN(due.getTime())
-              ? due.toLocaleString("id-ID")
-              : "Belum ditentukan";
-
-          const statusText =
-            status === "selesai"
-              ? "Selesai"
-              : status === "dikerjakan"
-                ? "Sedang dikerjakan"
-                : "Belum dikerjakan";
-
-          const statusIcon =
-            status === "selesai"
-              ? "✅"
-              : status === "dikerjakan"
-                ? "🟡"
-                : "🔴";
-
-          const statusClass =
-            status === "selesai"
-              ? "done"
-              : status === "dikerjakan"
-                ? "doing"
-                : "todo";
-
-          const course =
-            courses[Number(task.courseId) - 1] ||
-            "Mata kuliah";
+          const due = task.dueAt?.toDate ? task.dueAt.toDate() : task.dueAt ? new Date(task.dueAt) : null;
+          const dueText = due && !isNaN(due.getTime()) ? due.toLocaleString("id-ID") : "Belum ditentukan";
+          
+          const statusText = status === "selesai" ? "Selesai" : status === "dikerjakan" ? "Sedang dikerjakan" : "Belum dikerjakan";
+          const statusIcon = status === "selesai" ? "✅" : status === "dikerjakan" ? "🟡" : "🔴";
+          const statusClass = status === "selesai" ? "done" : status === "dikerjakan" ? "doing" : "todo";
+          const course = courses[Number(task.courseId) - 1] || "Mata kuliah";
 
           return `
             <article class="task">
-              <h3>${escapeHtml(
-                task.title || "Tugas tanpa judul"
-              )}</h3>
-
-              <div class="muted">
-                ${escapeHtml(course)} ·
-                ${escapeHtml(task.type || "tugas")}
+              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                  <h3 style="margin:0 0 6px; font-size:1.1rem;">${escapeHtml(task.title || "Tugas tanpa judul")}</h3>
+                  <div class="muted" style="margin-bottom: 8px;">
+                    <span class="pill" style="background:#f1f5f9; color:var(--muted)">${escapeHtml(course)}</span> 
+                    <span class="pill" style="background:#f1f5f9; color:var(--muted)">${escapeHtml(task.type || "tugas")}</span>
+                  </div>
+                </div>
               </div>
 
-              <p>${escapeHtml(task.description || "")}</p>
+              <p style="margin: 8px 0; font-size: 0.95rem;">${escapeHtml(task.description || "")}</p>
 
-              <p class="muted">
-                Tenggat: ${escapeHtml(dueText)}
-              </p>
-
-              <div class="actions">
-                <span class="status ${statusClass}">
-                  ${statusIcon} Status saya: ${statusText}
-                </span>
-
-                <button
-                  class="secondary"
-                  data-progress="${escapeHtml(task.id)}"
-                  data-status="${escapeHtml(status)}">
-                  Ubah progres
-                </button>
+              <div style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--line); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <div style="font-size: 0.85rem;">
+                  <span class="muted">Tenggat:</span> <strong style="color:var(--ink)">${escapeHtml(dueText)}</strong>
+                </div>
+                <div class="actions">
+                  <span class="status ${statusClass}" style="margin-right:8px; padding: 4px 8px; border-radius: 6px; background: rgba(0,0,0,0.03);">
+                    ${statusIcon} ${statusText}
+                  </span>
+                  <button class="secondary" data-progress="${escapeHtml(task.id)}" data-status="${escapeHtml(status)}">
+                    Ubah Progres
+                  </button>
+                </div>
               </div>
             </article>
           `;
         }).join("")
       : "<p class='muted'>Belum ada tugas yang dimasukkan.</p>";
 
-    // Hubungkan tombol perubahan progres.
     document.querySelectorAll("[data-progress]").forEach(button => {
-      button.onclick = () => {
-        updateProgress(
-          button.dataset.progress,
-          button.dataset.status
-        );
-      };
+      button.onclick = () => updateProgress(button.dataset.progress, button.dataset.status);
     });
-
-    msg("Data berhasil dimuat.");
 
   } catch (error) {
     console.error("Gagal memuat tugas/progres:", error);
-
-    msg(
-      "Gagal memuat tugas/progres. Kode: " +
-      (error.code || "unknown") +
-      " | Detail: " +
-      error.message,
-      true
-    );
+    msg("Gagal memuat tugas/progres. Kode: " + (error.code || "unknown") + " | Detail: " + error.message, true);
   }
 }
   
 // ========================================
-// 9. MEMPERBARUI PROGRES TUGAS
+// 9. MEMPERBARUI PROGRES TUGAS (Otomatis Siklus)
 // ========================================
-
 async function updateProgress(taskId, oldStatus) {
   if (!currentUser || !db) return;
 
-  const choices = [
-    ["belum", "Belum dikerjakan"],
-    ["dikerjakan", "Sedang dikerjakan"],
-    ["selesai", "Selesai"]
-  ];
-
-  const defaultStatus =
-    oldStatus === "belum"
-      ? "dikerjakan"
-      : oldStatus === "dikerjakan"
-        ? "selesai"
-        : "belum";
-
-  const next = prompt(
-    "Pilih status dengan mengetik: " +
-    "belum, dikerjakan, atau selesai",
-    defaultStatus
-  );
-
-  if (!choices.some(choice => choice[0] === next)) {
-    return;
-  }
+  // Siklus status: belum -> dikerjakan -> selesai -> belum
+  let nextStatus = "belum";
+  if (oldStatus === "belum") nextStatus = "dikerjakan";
+  else if (oldStatus === "dikerjakan") nextStatus = "selesai";
+  else if (oldStatus === "selesai") nextStatus = "belum";
 
   try {
     const progressId = `${taskId}_${currentUser.uid}`;
+    
+    // Memberikan efek kursor loading agar UX terasa responsif
+    document.body.style.cursor = "wait";
 
-    await setDoc(
-      doc(db, "task_progress", progressId),
-      {
-        taskId,
-        userId: currentUser.uid,
-        status: next,
-        updatedAt: serverTimestamp()
-      }
-    );
+    await setDoc(doc(db, "task_progress", progressId), {
+      taskId,
+      userId: currentUser.uid,
+      status: nextStatus,
+      updatedAt: serverTimestamp()
+    });
 
-  await loadTasks();
-
-if (currentRole === "admin") {
-  await loadAdminDashboard();
-}
-
+    await loadTasks();
+    if (currentRole === "admin") {
+      await loadAdminDashboard();
+    }
   } catch (error) {
     console.error("Gagal memperbarui progres:", error);
-
-    msg(
-      "Gagal memperbarui progres: " +
-      error.message,
-      true
-    );
+    msg("Gagal memperbarui progres: " + error.message, true);
+  } finally {
+    document.body.style.cursor = "default";
   }
 }
 </script>
