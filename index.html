@@ -87,6 +87,7 @@ import {
   getDocs,
   query,
   orderBy,
+  where,
   serverTimestamp,
   doc,
   getDoc,
@@ -404,6 +405,71 @@ async function loadTasks() {
             due && !isNaN(due.getTime())
               ? due.toLocaleString("id-ID")
               : "Belum ditentukan";
+async function loadTasks() {
+  if (!db || !currentUser) return;
+
+  try {
+    // 1. Ambil daftar tugas
+    const taskSnap = await getDocs(
+      query(
+        collection(db, "tasks"),
+        orderBy("dueAt", "asc")
+      )
+    );
+
+    const tasks = taskSnap.docs.map(item => ({
+      id: item.id,
+      ...item.data()
+    }));
+
+    $("taskCount").textContent = tasks.length;
+
+    // 2. Ambil progres sesuai peran pengguna
+    let progressQuery;
+
+    if (currentRole === "admin") {
+      // Admin dapat membaca seluruh progres
+      progressQuery = collection(db, "task_progress");
+    } else {
+      // Mahasiswa hanya membaca progres miliknya
+      progressQuery = query(
+        collection(db, "task_progress"),
+        where("userId", "==", currentUser.uid)
+      );
+    }
+
+    const progressSnap = await getDocs(progressQuery);
+
+    const myProgress = new Map(
+      progressSnap.docs.map(item => [
+        item.data().taskId,
+        item.data()
+      ])
+    );
+
+    // 3. Hitung tugas yang sudah selesai
+    $("doneCount").textContent = [
+      ...myProgress.values()
+    ].filter(progress =>
+      progress.status === "selesai"
+    ).length;
+
+    // 4. Tampilkan daftar tugas
+    $("tasksList").innerHTML = tasks.length
+      ? tasks.map(task => {
+          const progress = myProgress.get(task.id);
+          const status = progress?.status || "belum";
+
+          const due = task.dueAt?.toDate
+            ? task.dueAt.toDate()
+            : task.dueAt
+              ? new Date(task.dueAt)
+              : null;
+
+          const dueText =
+            due && !isNaN(due.getTime())
+              ? due.toLocaleString("id-ID")
+              : "Belum ditentukan";
 
           const statusText =
             status === "selesai"
@@ -462,6 +528,7 @@ async function loadTasks() {
         }).join("")
       : "<p class='muted'>Belum ada tugas yang dimasukkan.</p>";
 
+    // 5. Hubungkan tombol perubahan progres
     document.querySelectorAll("[data-progress]").forEach(button => {
       button.onclick = () =>
         updateProgress(
@@ -484,8 +551,7 @@ async function loadTasks() {
     );
   }
 }
-
-
+        
 // ========================================
 // 9. MEMPERBARUI PROGRES TUGAS
 // ========================================
