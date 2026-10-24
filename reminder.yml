@@ -1,0 +1,27 @@
+name: Academic Reminder Cron
+
+on:
+  schedule:
+    - cron: '0 * * * *' # Menjalankan skrip setiap 1 jam sekali secara otomatis
+  workflow_dispatch: # Memungkinkan Anda menjalankan manual dari tab Actions
+
+jobs:
+  run-reminder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        run: npm install firebase-admin
+
+      - name: Run Deadline Checker
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: node check-deadline.js
+        
