@@ -1,6 +1,6 @@
 const admin = require("firebase-admin");
 
-// Inisialisasi Firebase menggunakan kredensial rahasia GitHub
+// Inisialisasi Firebase menggunakan kredensial rahasia GitHub Secrets
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
 admin.initializeApp({
@@ -10,13 +10,18 @@ admin.initializeApp({
 const db = admin.firestore();
 
 async function checkTaskDeadlines() {
-  console.log("Memeriksa deadline tugas...");
+  console.log("🤖 [Robot Reminder] Memeriksa deadline tugas akademik...");
   const now = new Date();
 
   try {
     const tasksSnapshot = await db.collection("tasks").get();
     
-    tasksSnapshot.forEach(async (docSnap) => {
+    if (tasksSnapshot.empty) {
+      console.log("Belum ada tugas yang tersimpan di database.");
+      return;
+    }
+
+    tasksSnapshot.forEach((docSnap) => {
       const task = docSnap.data();
       if (!task.dueAt) return;
 
@@ -25,29 +30,27 @@ async function checkTaskDeadlines() {
       const diffHours = diffMs / (1000 * 60 * 60);
       const diffDays = diffHours / 24;
 
-      // Logika pengecekan H-3 (sekitar 72 jam), H-1 (24 jam), 6 jam, dan 1 jam
-      // Kita beri rentang waktu toleransi (misal selisih 1 jam dari waktu eksekusi cron)
-      console.log(`Tugas: ${task.title}, Sisa waktu: ${diffHours.toFixed(1)} jam`);
+      console.log(`📌 Tugas: "${task.title}" | Sisa waktu: ${diffDays >= 1 ? diffDays.toFixed(1) + ' hari' : diffHours.toFixed(1) + ' jam'}`);
 
-      // Contoh pemicu notifikasi FCM bisa ditambahkan di sini
+      // Logika deteksi rentang waktu mendekati deadline (dengan toleransi kisaran 1 jam eksekusi cron)
       if (diffDays >= 2.9 && diffDays <= 3.1) {
-        console.log(`-> Memicu pengingat H-3 untuk tugas: ${task.title}`);
-        // Kirim notifikasi FCM H-3
-      } else if (diffDays >= 0.9 && diffDays <= 1.1) {
-        console.log(`-> Memicu pengingat H-1 untuk tugas: ${task.title}`);
-        // Kirim notifikasi FCM H-1
-      } else if (diffHours >= 5.8 && diffHours <= 6.2) {
-        console.log(`-> Memicu pengingat 6 jam untuk tugas: ${task.title}`);
-        // Kirim notifikasi FCM 6 jam
-      } else if (diffHours >= 0.9 && diffHours <= 1.1) {
-        console.log(`-> Memicu pengingat 1 jam untuk tugas: ${task.title}`);
-        // Kirim notifikasi FCM 1 jam
+        console.log(`🚨 [PERINGATAN H-3]: Tugas "${task.title}" akan deadline dalam 3 hari!`);
+        // Di sini Anda bisa menghubungkan fungsi pengiriman notifikasi FCM/OneSignal jika token perangkat tersimpan
+      } 
+      else if (diffDays >= 0.9 && diffDays <= 1.1) {
+        console.log(`🚨 [PERINGATAN H-1]: Tugas "${task.title}" akan deadline besok!`);
+      } 
+      else if (diffHours >= 5.8 && diffHours <= 6.2) {
+        console.log(`🚨 [PERINGATAN 6 JAM]: Tugas "${task.title}" tinggal 6 jam lagi!`);
+      } 
+      else if (diffHours >= 0.9 && diffHours <= 1.1) {
+        console.log(`🚨 [PERINGATAN 1 JAM]: Tugas "${task.title}" tinggal 1 jam lagi! Segera kumpulkan!`);
       }
     });
 
-    console.log("Pemeriksaan deadline selesai.");
+    console.log("✅ Pemeriksaan deadline selesai.");
   } catch (error) {
-    console.error("Gagal memeriksa deadline:", error);
+    console.error("❌ Gagal memeriksa deadline:", error);
   }
 }
 
