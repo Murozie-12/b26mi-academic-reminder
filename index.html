@@ -325,12 +325,12 @@ import { getFirestore, collection, addDoc, getDocs, query, orderBy, where, serve
 import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-messaging.js";
 
 const firebaseConfig = {
-  apiKey: "xxxxx",
+  apiKey: "AIzaSyBsVOWrSKNO42A3vJ_baQNs1QoLhiBt3M0",
   authDomain: "b26mi-academic-reminder.firebaseapp.com",
   projectId: "b26mi-academic-reminder",
   storageBucket: "b26mi-academic-reminder.firebasestorage.app",
   messagingSenderId: "739552881698",
-  appId: "xxxxxxxxx"
+  appId: "1:739552881698:web:c9e5d290e4e4c4a723ee7b"
 };
   
 const $ = id => document.getElementById(id);
@@ -521,7 +521,7 @@ if (!isConfigured) {
       $("appArea").classList.toggle("hidden", !user);
       $("loginBtn").classList.toggle("hidden", !!user);
       $("logoutBtn").classList.toggle("hidden", !user);
-      $("notifBtn").classList.toggle("hidden", !us
+      $("notifBtn").classList.toggle("hidden", !user);
       $("authStatus").textContent = user ? `${user.displayName || "Mahasiswa"} · ${user.email}` : "Belum login";
 
       if (!user) { currentRole = "mahasiswa"; return; }
