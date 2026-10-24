@@ -454,9 +454,16 @@ if (!isConfigured) {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
-    messaging = getMessaging(app);
-    $("loginBtn").disabled = false;
+    
+    // Inisialisasi messaging dengan aman agar tidak membuat macet login
+    try {
+      messaging = getMessaging(app);
+    } catch (e) {
+      console.warn("FCM tidak didukung di browser ini:", e);
+    }
 
+    $("loginBtn").disabled = false;
+    
     $("loginBtn").addEventListener("click", async () => {
       try { await signInWithPopup(auth, new GoogleAuthProvider()); }
       catch (error) { showToast("Login gagal: " + error.message, true); }
