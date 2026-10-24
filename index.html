@@ -152,8 +152,11 @@ footer{padding:30px;text-align:center;color:var(--muted);font-size:.85rem}
   <section class="card">
     <div class="actions" style="justify-content:space-between">
       <div><h2>Selamat datang di B26MI</h2><div id="authStatus" class="muted">Belum login</div></div>
-      <button id="loginBtn">Masuk dengan Google</button>
-      <button id="logoutBtn" class="secondary hidden">Keluar</button>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button id="notifBtn" class="secondary hidden" style="background: rgba(37, 99, 235, 0.1); color: var(--blue);">🔔 Aktifkan Notifikasi HP</button>
+        <button id="loginBtn">Masuk dengan Google</button>
+        <button id="logoutBtn" class="secondary hidden">Keluar</button>
+      </div>
     </div>
   </section>
 
@@ -319,6 +322,7 @@ footer{padding:30px;text-align:center;color:var(--muted);font-size:.85rem}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, query, orderBy, where, serverTimestamp, doc, getDoc, setDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-messaging.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBsVOWrSKNO42A3vJ_baQNs1QoLhiBt3M0",
@@ -358,6 +362,7 @@ const courses = [
 let app = null;
 let auth = null;
 let db = null;
+let messaging = null;
 let currentUser = null;
 let currentRole = "mahasiswa";
 let editingTaskId = null;
@@ -449,6 +454,7 @@ if (!isConfigured) {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
+    messaging = getMessaging(app);
     $("loginBtn").disabled = false;
 
     $("loginBtn").addEventListener("click", async () => {
@@ -457,8 +463,29 @@ if (!isConfigured) {
     });
 
     $("logoutBtn").addEventListener("click", async () => {
+    try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+      catch (error) { showToast("Login gagal: " + error.message, true); }
+    });
+
+    $("logoutBtn").addEventListener("click", async () => {
       try { await signOut(auth); showToast("Kamu berhasil keluar.", false); }
       catch (error) { showToast("Gagal logout: " + error.message, true); }
+    });
+
+    // Tombol untuk meminta izin notifikasi HP
+    $("notifBtn").addEventListener("click", async () => {
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+          // Ganti string di bawah dengan Web VAPID Key dari Firebase Console Anda (jika pakai FCM Web Push)
+          showToast("Notifikasi HP berhasil diaktifkan!");
+          $("notifBtn").classList.add("hidden");
+        } else {
+          showToast("Izin notifikasi ditolak oleh browser.", true);
+        }
+      } catch (err) {
+        showToast("Gagal mengaktifkan notifikasi: " + err.message, true);
+      }
     });
 
     $("refreshBtn").addEventListener("click", () => {
@@ -473,6 +500,7 @@ if (!isConfigured) {
       $("appArea").classList.toggle("hidden", !user);
       $("loginBtn").classList.toggle("hidden", !!user);
       $("logoutBtn").classList.toggle("hidden", !user);
+      $("notifBtn").classList.toggle("hidden", !user);
       $("authStatus").textContent = user ? `${user.displayName || "Mahasiswa"} · ${user.email}` : "Belum login";
 
       if (!user) { currentRole = "mahasiswa"; return; }
@@ -651,7 +679,6 @@ async function loadAnnouncement() {
   }
 }
 
-// DASHBOARD ADMIN DIPERBARUI: Dikelompokkan rapi per Mata Kuliah
 async function loadAdminDashboard() {
   if (!db || !currentUser || currentRole !== "admin") return;
   try {
@@ -681,7 +708,6 @@ async function loadAdminDashboard() {
 
     const studentMap = new Map(students.map(student => [student.id, student.data().displayName || "Mahasiswa"]));
     
-    // Kelompokkan tugas berdasarkan courseId
     const tasksByCourse = {};
     courses.forEach((c, idx) => {
       tasksByCourse[String(idx + 1)] = { courseName: c, tasks: [] };
@@ -693,14 +719,13 @@ async function loadAdminDashboard() {
       }
     });
 
-    // Buat map status progres: "taskId_userId" -> status
     const progressMap = new Map(validProgress.map(p => [`${p.taskId}_${p.userId}`, p.status]));
 
     let htmlOutput = "";
 
     Object.keys(tasksByCourse).forEach(courseId => {
       const courseGroup = tasksByCourse[courseId];
-      if (courseGroup.tasks.length === 0) return; // Lewati matkul yang tidak ada tugas
+      if (courseGroup.tasks.length === 0) return;
 
       htmlOutput += `
         <div style="background:var(--bg); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:14px;">
@@ -908,7 +933,7 @@ async function loadTasks() {
                   </span><br>
                   <div style="display:flex; gap: 10px; margin-top: 6px;">
                     <a href="${gcalUrl}" target="_blank" style="font-size:0.75rem; color:var(--blue); text-decoration:none; font-weight:600;">
-                      📅 + Google Calendar
+                    📅 + Google Calendar
                     </a>
                     <a href="${waUrl}" target="_blank" style="font-size:0.75rem; color:var(--green); text-decoration:none; font-weight:600;">
                       💬 Hubungi PJMK
@@ -933,7 +958,7 @@ async function loadTasks() {
 
     document.querySelectorAll("[data-progress]").forEach(button => {
       button.onclick = () => updateProgress(button.dataset.progress, button.dataset.status);
-      });
+    });
 
     if (currentRole === "admin") {
       document.querySelectorAll("[data-edit]").forEach(btn => {
