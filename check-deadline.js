@@ -1,11 +1,20 @@
 const admin = require('firebase-admin');
 
-// Inisialisasi Firebase Admin dengan rahasia dari GitHub Secrets
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+// Cek apakah Secret GitHub tersedia
+if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
+  console.error("❌ ERROR FATAL: Variabel rahasia 'FIREBASE_SERVICE_ACCOUNT' tidak ditemukan di GitHub Secrets!");
+  process.exit(1);
+}
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+try {
+  const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+} catch (error) {
+  console.error("❌ Gagal memparsing JSON dari FIREBASE_SERVICE_ACCOUNT:", error.message);
+  process.exit(1);
+}
 
 const db = admin.firestore();
 const messaging = admin.messaging();
@@ -15,7 +24,7 @@ async function runRobot() {
   const now = new Date();
 
   try {
-    // Ambil semua tugas dari database
+    // 1. Ambil semua tugas dari database
     const tasksSnapshot = await db.collection('tasks').get();
     
     for (const doc of tasksSnapshot.docs) {
@@ -139,7 +148,6 @@ async function sendDeadlineNotification(taskId, task, title, body) {
 
 // --- FUNGSI BANTUAN (HELPER) ---
 
-// Mencari tahu siapa saja UID mahasiswa yang berhak mendapat tugas ini
 async function getTargetUsers(task) {
   let targetUsers = [];
   if (task.target === 'tertentu' || task.target === 'kelompok') {
@@ -151,7 +159,6 @@ async function getTargetUsers(task) {
   return targetUsers;
 }
 
-// Mengambil token HP (alamat FCM) dari daftar UID mahasiswa
 async function getTokensForUsers(userIdsArray) {
   const tokens = [];
   const tokensSnapshot = await db.collection('fcm_tokens').get();
@@ -164,5 +171,4 @@ async function getTokensForUsers(userIdsArray) {
   return tokens;
 }
 
-// Jalankan fungsi utama
 runRobot();
