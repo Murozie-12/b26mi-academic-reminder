@@ -2,7 +2,7 @@ name: Academic Reminder Cron
 
 on:
   schedule:
-    - cron: '0 * * * *' # Menjalankan skrip setiap 1 jam sekali secara otomatis
+    - cron: '*/10 * * * *' # Menjalankan skrip setiap 1 jam sekali secara otomatis
   workflow_dispatch: # Memungkinkan Anda menjalankan manual dari tab Actions
 
 jobs:
