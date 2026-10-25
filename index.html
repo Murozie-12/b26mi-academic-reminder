@@ -1,0 +1,1080 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B26MI — Academic Reminder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --blue: #2563eb;
+  --blue-hover: #1d4ed8;
+  --green: #16a34a;
+  --amber: #d97706;
+  --red: #dc2626;
+  --line: #e2e8f0;
+  --card-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+  --header-bg: #0f172a;
+}
+
+[data-theme="dark"] {
+  --bg: #0b0f19;
+  --card: #131c2e;
+  --ink: #f8fafc;
+  --muted: #94a3b8;
+  --blue: #3b82f6;
+  --blue-hover: #60a5fa;
+  --green: #22c55e;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --line: #1e293b;
+  --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3);
+  --header-bg: #090e17;
+}
+
+*{box-sizing:border-box}
+body{margin:0;font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--ink);transition: background 0.3s ease, color 0.3s ease;}
+
+header{background:var(--header-bg);color:#fff;padding:20px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1);}
+header h1{font-size:1.25rem;margin:0 0 4px; font-weight: 700;}
+header p{margin:0;color:#94a3b8;font-size:.875rem}
+
+main{max-width:1050px;margin:auto;padding:20px 16px;}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:var(--card-shadow);margin-bottom:16px; transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;}
+h2{font-size:1.1rem;margin:0 0 12px; font-weight: 600;}
+.muted{color:var(--muted);font-size:.9rem}
+.pill{display:inline-block;border-radius:999px;padding:5px 12px;font-size:.75rem;font-weight:600;background:rgba(37, 99, 235, 0.1);color:var(--blue)}
+
+button,input,select,textarea{font:inherit; transition: all 0.2s ease;}
+button{border:0;border-radius:12px;background:var(--blue);color:#fff;padding:10px 16px;cursor:pointer;font-weight:600; font-size: 0.9rem;}
+button.secondary{background:var(--line);color:var(--ink)}
+button.danger{background:rgba(220, 38, 38, 0.1);color:var(--red)}
+button:disabled{opacity:.5;cursor:not-allowed}
+button:hover:not(:disabled) {filter: brightness(1.05); transform: translateY(-1px);}
+button:active:not(:disabled) {transform: translateY(0);}
+
+input,select,textarea{width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);margin:6px 0 12px; font-size: 0.9rem;}
+input:focus, select:focus, textarea:focus {border-color: var(--blue); outline: none; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);}
+
+label{font-size:.85rem;font-weight:600;display:block; margin-bottom: 2px;}
+.formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+.task{border:1px solid var(--line);border-radius:16px;padding:18px;margin:12px 0;background:var(--card); transition: transform 0.2s ease, box-shadow 0.2s ease;}
+.task:hover{box-shadow: 0 6px 20px rgba(0,0,0,0.08); transform: translateY(-2px);}
+.task.completed-task { opacity: 0.65; background: rgba(0,0,0,0.01); }
+.task h3{margin:0 0 8px;font-size:1.1rem; font-weight: 600;}
+.status{font-size:.85rem;font-weight:700}
+.done{color:var(--green)}
+.doing{color:var(--amber)}
+.todo{color:var(--red)}
+
+.progress-container { background: var(--line); border-radius: 99px; height: 10px; width: 100%; overflow: hidden; margin-top: 8px; }
+.progress-bar { background: var(--green); height: 100%; width: 0%; transition: width 0.4s ease; }
+
+#toastContainer {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.toast {
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  padding: 14px 18px;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideIn 0.3s ease forwards;
+  max-width: 350px;
+}
+.toast.error { border-left: 4px solid var(--red); }
+.toast.success { border-left: 4px solid var(--green); }
+@keyframes slideIn {
+  from { transform: translateY(100px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.hidden{display:none!important}
+footer{padding:30px;text-align:center;color:var(--muted);font-size:.85rem}
+
+#tasksList.show-active-only .task-done { display: none !important; }
+#tasksList.show-done-only .task-active { display: none !important; }
+
+.theme-toggle {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 99px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.theme-toggle:hover { background: rgba(255, 255, 255, 0.2); }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>B26MI — Academic Reminder</h1>
+    <p>Pengingat tugas, presentasi, dan progres akademik</p>
+  </div>
+  <button id="themeToggleBtn" class="theme-toggle">🌙 Mode Gelap</button>
+</header>
+
+<main>
+  <section class="card" id="announcementCard" style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(22, 163, 74, 0.08)); border-color: var(--blue);">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h2 style="margin-bottom: 6px; color: var(--blue);">📢 Pengumuman Kelas</h2>
+    </div>
+    <div id="announcementText" style="font-size: 0.95rem; line-height: 1.5;">Memuat pengumuman...</div>
+  </section>
+
+  <section class="card">
+    <div class="actions" style="justify-content:space-between">
+      <div><h2>Selamat datang di B26MI</h2><div id="authStatus" class="muted">Belum login</div></div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button id="notifBtn" class="secondary hidden" style="background: rgba(37, 99, 235, 0.1); color: var(--blue);">🔔 Aktifkan Notifikasi HP</button>
+        <button id="loginBtn">Masuk dengan Google</button>
+        <button id="logoutBtn" class="secondary hidden">Keluar</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="appArea" class="hidden">
+    <div class="row">
+      <section class="card"><div class="muted">Tugas terlihat</div><h2 id="taskCount" style="margin-top:4px;">0</h2></section>
+      <section class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="muted">Progres Saya</div>
+          <span id="progressPercent" style="font-size: 0.85rem; font-weight: 700; color: var(--green);">0%</span>
+        </div>
+        <h2 id="doneCount" style="margin-top:4px; margin-bottom: 4px;">0 dari 0</h2>
+        <div class="progress-container"><div id="progressBar" class="progress-bar"></div></div>
+      </section>
+      <section class="card"><div class="muted">Peran akun</div><h2 id="roleLabel" style="margin-top:4px;">Mahasiswa</h2><span id="rolePill" class="pill" style="margin-top:4px;">mahasiswa</span></section>
+    </div>
+
+    <!-- JADWAL KULIAH & LINK ZOOM -->
+    <section class="card">
+      <div class="actions" style="justify-content:space-between; margin-bottom: 12px;">
+        <h2>📅 Jadwal Kuliah & Link Zoom</h2>
+      </div>
+      <div id="scheduleList">
+        <p class="muted">Memuat jadwal…</p>
+      </div>
+    </section>
+
+    <!-- DASHBOARD ADMIN -->
+    <section id="adminDashboard" class="card hidden">
+      <h2>Dashboard Admin</h2>
+      <p class="muted">Ringkasan aktivitas akademik mahasiswa.</p>
+      <div class="row">
+        <div class="card"><div class="muted">Total mahasiswa</div><h2 id="adminStudentCount" style="margin-top:4px;">0</h2></div>
+        <div class="card"><div class="muted">Total tugas</div><h2 id="adminTaskCount" style="margin-top:4px;">0</h2></div>
+        <div class="card"><div class="muted">Progres selesai</div><h2 id="adminDoneCount" style="margin-top:4px;">0</h2></div>
+        <div class="card"><div class="muted">Sedang dikerjakan</div><h2 id="adminDoingCount" style="margin-top:4px;">0</h2></div>
+        <div class="card"><div class="muted">Belum dikerjakan</div><h2 id="adminTodoCount" style="margin-top:4px;">0</h2></div>
+      </div>
+      <h2 style="margin-top: 20px;">Progres Mahasiswa per Mata Kuliah</h2>
+      <div id="adminProgressList">
+        <p class="muted">Data progres akan ditampilkan di sini.</p>
+      </div>
+    </section>
+
+    <!-- PANEL ADMIN -->
+    <section id="adminPanel" class="card hidden">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 id="formTitle">Panel Admin — Tambahkan tugas</h2>
+        <button id="cancelEditBtn" class="secondary hidden" style="padding: 6px 12px; font-size: 0.8rem;">Batal Edit</button>
+      </div>
+      
+      <p class="muted">Hanya akun admin yang boleh mengelola tugas.</p>
+      <form id="taskForm">
+        <div class="formgrid">
+          <div>
+            <label>Nama tugas</label>
+            <input id="taskTitle" required maxlength="120" placeholder="Contoh: Presentasi proposal">
+          </div>
+          <div>
+            <label>Mata kuliah</label>
+            <select id="courseSelect" required></select>
+          </div>
+          <div>
+            <label>Jenis</label>
+            <select id="taskType">
+              <option value="individu">Individu</option>
+              <option value="kelompok">Kelompok</option>
+              <option value="presentasi">Presentasi</option>
+              <option value="kuis">Kuis</option>
+              <option value="uts">UTS</option>
+              <option value="uas">UAS</option>
+            </select>
+          </div>
+          <div>
+            <label>Tenggat</label>
+            <input id="dueAt" type="datetime-local" required>
+          </div>
+        </div>
+
+        <div class="formgrid" style="margin-top: 4px;">
+          <div>
+            <label>Target Ditujukan Untuk</label>
+            <select id="taskTarget">
+              <option value="semua">🌐 Semua Mahasiswa (Publik)</option>
+              <option value="kelompok">👥 Khusus Tugas Kelompok</option>
+              <option value="tertentu">👤 Mahasiswa Tertentu (Pilih Orang)</option>
+            </select>
+          </div>
+          <div>
+            <label>Nomor WA PJMK Tugas Ini (Awali 62)</label>
+            <input id="taskPjmkPhone" type="text" placeholder="628xxxxxxxxxx" required value="628123456789">
+          </div>
+        </div>
+
+        <div id="specificStudentsContainer" class="hidden" style="margin-top: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg);">
+          <label style="margin-bottom: 6px; color: var(--blue);">Pilih Mahasiswa yang Berhak Menerima Tugas Ini:</label>
+          <div id="studentCheckboxes" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
+            <p class="muted">Memuat daftar mahasiswa...</p>
+          </div>
+        </div>
+
+        <label style="margin-top: 10px;">Instruksi / catatan</label>
+        <textarea id="taskDescription" rows="2" maxlength="2000" placeholder="Petunjuk pengerjaan, format pengumpulan, dan lain-lain"></textarea>
+        <button type="submit" id="submitTaskBtn" style="margin-top: 6px;">Simpan tugas</button>
+      </form>
+
+      <hr style="border:0; border-top:1px solid var(--line); margin: 24px 0;">
+      <h2>Panel Admin — Perbarui Pengumuman Kelas</h2>
+      <form id="announcementForm">
+        <div>
+          <label>Isi Pengumuman</label>
+          <textarea id="announcementInput" rows="3" placeholder="Tulis pengumuman penting untuk kelas di sini..."></textarea>
+        </div>
+        <button type="submit" style="margin-top: 6px;">Publikasikan Pengumuman</button>
+      </form>
+
+      <hr style="border:0; border-top:1px solid var(--line); margin: 24px 0;">
+      <h2>Panel Admin — Tambahkan Jadwal & Link Zoom</h2>
+      <form id="scheduleForm">
+        <div class="formgrid">
+          <div>
+            <label>Mata Kuliah</label>
+            <select id="scheduleCourseSelect" required></select>
+          </div>
+          <div>
+            <label>Hari & Jam</label>
+            <input id="scheduleTime" required placeholder="Contoh: Senin, 08:00 WIB">
+          </div>
+          <div>
+            <label>Link Zoom / GMeet</label>
+            <input id="scheduleLink" type="url" required placeholder="https://zoom.us/j/...">
+          </div>
+        </div>
+        <button type="submit" style="margin-top: 6px; background: var(--green);">Simpan Jadwal Kuliah</button>
+      </form>
+    </section>
+
+    <!-- DAFTAR TUGAS -->
+    <section class="card">
+      <div class="actions" style="justify-content:space-between; margin-bottom: 12px;">
+        <h2>Daftar tugas</h2>
+        <button id="refreshBtn" class="secondary">Muat ulang</button>
+      </div>
+      
+      <div class="actions" style="margin-bottom: 16px; border-bottom: 1px solid var(--line); padding-bottom: 12px;" id="filterContainer">
+        <button class="filter-btn" data-filter="all" style="border-radius: 20px; font-size: 0.85rem; padding: 6px 14px;">Semua</button>
+        <button class="filter-btn secondary" data-filter="active" style="border-radius: 20px; font-size: 0.85rem; padding: 6px 14px;">Belum Selesai</button>
+        <button class="filter-btn secondary" data-filter="done" style="border-radius: 20px; font-size: 0.85rem; padding: 6px 14px;">Selesai</button>
+      </div>
+
+      <div id="tasksList">
+        <p class="muted">Memuat tugas…</p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<div id="toastContainer"></div>
+
+<footer>B26MI — Academic Reminder</footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, where, serverTimestamp, doc, getDoc, setDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-messaging.js";
+
+const firebaseConfig = {
+  apiKey: "xxxxx", // PASTIKAN GANTI DENGAN API KEY ANDA
+  authDomain: "b26mi-academic-reminder.firebaseapp.com",
+  projectId: "b26mi-academic-reminder",
+  storageBucket: "b26mi-academic-reminder.firebasestorage.app",
+  messagingSenderId: "739552881698",
+  appId: "xxxxxxxxx" // PASTIKAN GANTI DENGAN APP ID ANDA
+};
+  
+const $ = id => document.getElementById(id);
+
+const showToast = (text, isError = false) => {
+  const container = $("toastContainer");
+  const toast = document.createElement("div");
+  toast.className = `toast ${isError ? 'error' : 'success'}`;
+  toast.innerHTML = `<span>${isError ? '⚠️' : '✅'}</span> <span>${escapeHtml(text)}</span>`;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateY(20px)";
+    toast.style.transition = "all 0.3s ease";
+    setTimeout(() => toast.remove(), 3000);
+  }, 3500);
+};
+
+window.addEventListener('online', () => showToast("Koneksi internet pulih kembali."));
+window.addEventListener('offline', () => showToast("⚠️ Koneksi internet terputus!", true));
+
+const courses = [
+  "Bahasa Arab", "Teosofi", "Teori belajar dan psikologi perkembangan",
+  "Penulisan Karya ilmiah", "Bahasa Indonesia", "Filsafat pendidikan",
+  "Pancasila", "Studi Fiqih", "Sejarah Peradaban Islam", "Agama Islam"
+];
+
+let app = null;
+let auth = null;
+let db = null;
+let messaging = null;
+let currentUser = null;
+let currentRole = "mahasiswa";
+let editingTaskId = null;
+let allTasksData = [];
+let allStudentsList = [];
+
+const themeToggleBtn = $("themeToggleBtn");
+const currentTheme = localStorage.getItem("theme") || "light";
+
+if (currentTheme === "dark") {
+  document.documentElement.setAttribute("data-theme", "dark");
+  themeToggleBtn.textContent = "☀️ Mode Terang";
+}
+
+themeToggleBtn.addEventListener("click", () => {
+  let theme = document.documentElement.getAttribute("data-theme");
+  if (theme === "dark") {
+    document.documentElement.removeAttribute("data-theme");
+    localStorage.setItem("theme", "light");
+    themeToggleBtn.textContent = "🌙 Mode Gelap";
+  } else {
+    document.documentElement.setAttribute("data-theme", "dark");
+    localStorage.setItem("theme", "dark");
+    themeToggleBtn.textContent = "☀️ Mode Terang";
+  }
+});
+
+$("taskTarget").addEventListener("change", (e) => {
+  $("specificStudentsContainer").classList.toggle("hidden", e.target.value !== "tertentu");
+});
+
+function showCourses() {
+  const optionsHtml = courses.map((course, i) => `<option value="${i + 1}">${escapeHtml(course)}</option>`).join("");
+  $("courseSelect").innerHTML = optionsHtml;
+  $("scheduleCourseSelect").innerHTML = optionsHtml;
+}
+  
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[char]);
+}
+
+function getDeadlineInfo(due) {
+  if (!due || isNaN(due.getTime())) return { text: "Waktu tidak ditentukan", color: "var(--muted)", weight: "normal" };
+  const now = new Date();
+  const diffMs = due - now;
+  if (diffMs < 0) return { text: "⚠️ Terlewat", color: "var(--red)", weight: "bold" };
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  if (diffDays > 3) return { text: `Masih ${diffDays} hari`, color: "var(--green)", weight: "normal" };
+  if (diffDays > 0) return { text: `Sisa ${diffDays} hari lagi`, color: "var(--amber)", weight: "bold" };
+  if (diffHours > 0) return { text: `🔴 Sisa ${diffHours} jam!`, color: "var(--red)", weight: "bold" };
+  return { text: "🔴 Kurang dari 1 jam!", color: "var(--red)", weight: "bold" };
+}
+
+function generateGoogleCalendarUrl(taskTitle, courseName, dueDate, description) {
+  if (!dueDate || isNaN(dueDate.getTime())) return "#";
+  const formatGCalTime = (date) => date.toISOString().replace(/-|:|\.\d\d\d/g,"");
+  const startTime = formatGCalTime(dueDate);
+  const endDateObj = new Date(dueDate.getTime() + 60 * 60 * 1000);
+  const endTime = formatGCalTime(endDateObj);
+  const text = encodeURIComponent(`Tugas [${courseName}]: ${taskTitle}`);
+  const details = encodeURIComponent(`${description || "Tidak ada catatan."}\n\nPengingat Akademik B26MI`);
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${startTime}/${endTime}&details=${details}`;
+}
+
+showCourses();
+
+document.querySelectorAll(".filter-btn").forEach(btn => {
+  btn.addEventListener("click", e => {
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.add("secondary"));
+    e.target.classList.remove("secondary");
+    const filter = e.target.dataset.filter;
+    const list = $("tasksList");
+    if (filter === "all") list.className = "";
+    else if (filter === "active") list.className = "show-active-only";
+    else if (filter === "done") list.className = "show-done-only";
+  });
+});
+
+const isConfigured = Boolean(firebaseConfig.apiKey) && !firebaseConfig.apiKey.startsWith("GANTI_");
+
+if (!isConfigured) {
+  $("loginBtn").disabled = true;
+  showToast("Konfigurasi Firebase belum lengkap.", true);
+} else {
+  try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    
+    // Inisialisasi messaging dengan aman agar tidak membuat macet login
+    try {
+      messaging = getMessaging(app);
+    } catch (e) {
+      console.warn("FCM tidak didukung di browser ini:", e);
+    }
+
+    $("loginBtn").disabled = false;
+    
+    $("loginBtn").addEventListener("click", async () => {
+      try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+      catch (error) { showToast("Login gagal: " + error.message, true); }
+   });
+
+    $("logoutBtn").addEventListener("click", async () => {
+      try { await signOut(auth); showToast("Kamu berhasil keluar.", false); }
+      catch (error) { showToast("Gagal logout: " + error.message, true); }
+    });
+
+    // Tombol untuk meminta izin notifikasi HP & menyimpan token FCM ke Firestore
+    $("notifBtn").addEventListener("click", async () => {
+      if (!currentUser) {
+        showToast("Silakan login terlebih dahulu!", true);
+        return;
+      }
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+          
+          // Mendaftarkan Service Worker secara manual menggunakan relative path untuk GitHub Pages
+          const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+          
+          const currentToken = await getToken(messaging, { 
+            vapidKey: 'BLX_G-kSYKO-WwP2MKwL-32DfAuT-h6SSOhjJE6yMe-IK6OnHhKfB10jwDibQ34nsUyPGNSkLPVM_NQG705y420',
+            serviceWorkerRegistration: registration
+          });
+
+          if (currentToken) {
+            await setDoc(doc(db, "fcm_tokens", currentUser.uid), {
+              uid: currentUser.uid,
+              email: currentUser.email || "",
+              token: currentToken,
+              updatedAt: serverTimestamp()
+            }, { merge: true });
+
+            showToast("Notifikasi HP & token berhasil diaktifkan!");
+            $("notifBtn").classList.add("hidden");
+          } else {
+            showToast("Gagal mengambil token FCM perangkat.", true);
+          }
+        } else {
+          showToast("Izin notifikasi ditolak oleh browser.", true);
+        }
+      } catch (err) {
+        showToast("Gagal mengaktifkan notifikasi: " + err.message, true);
+      }
+    });
+
+    $("refreshBtn").addEventListener("click", () => {
+      loadTasks();
+      loadSchedules();
+      loadAnnouncement();
+      showToast("Data berhasil dimuat ulang.");
+    });
+
+    onAuthStateChanged(auth, async user => {
+      currentUser = user;
+      $("appArea").classList.toggle("hidden", !user);
+      $("loginBtn").classList.toggle("hidden", !!user);
+      $("logoutBtn").classList.toggle("hidden", !user);
+      
+      // PERBAIKAN: Kurung tutup sebelumnya terpotong menjadi "!us"
+      $("notifBtn").classList.toggle("hidden", !user);
+      
+      $("authStatus").textContent = user ? `${user.displayName || "Mahasiswa"} · ${user.email}` : "Belum login";
+
+      if (!user) { currentRole = "mahasiswa"; return; }
+
+      try {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+          await setDoc(userRef, {
+            displayName: user.displayName || "Mahasiswa", email: user.email || "", role: "mahasiswa", createdAt: serverTimestamp()
+          });
+          currentRole = "mahasiswa";
+        } else {
+          currentRole = userSnap.data().role || "mahasiswa";
+        }
+
+        $("roleLabel").textContent = currentRole === "admin" ? "Admin" : currentRole === "ketua" ? "Ketua kelompok" : "Mahasiswa";
+        $("rolePill").textContent = currentRole;
+        $("adminPanel").classList.toggle("hidden", currentRole !== "admin");
+        $("adminDashboard").classList.toggle("hidden", currentRole !== "admin");
+        
+        await loadStudentsForAdmin();
+        await loadTasks();
+        await loadSchedules();
+        await loadAnnouncement();
+        if (currentRole === "admin") await loadAdminDashboard();
+      } catch (error) {
+        showToast("Login berhasil, tetapi profil database gagal dibaca: " + error.message, true);
+      }
+    });
+
+    $("announcementForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!currentUser || currentRole !== "admin") return;
+
+      try {
+        await setDoc(doc(db, "settings", "announcement"), {
+          text: $("announcementInput").value.trim(),
+          updatedAt: serverTimestamp()
+        });
+        showToast("Pengumuman berhasil diperbarui.");
+        loadAnnouncement();
+      } catch (error) {
+        showToast("Gagal menyimpan pengumuman: " + error.message, true);
+      }
+    });
+
+    $("taskForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!currentUser || currentRole !== "admin") return;
+
+      const target = $("taskTarget").value;
+      let selectedStudents = [];
+      if (target === "tertentu") {
+        document.querySelectorAll(".student-checkbox:checked").forEach(cb => {
+          selectedStudents.push(cb.value);
+        });
+        if (selectedStudents.length === 0) {
+          showToast("Pilih setidaknya satu mahasiswa untuk tugas tertentu!", true);
+          return;
+        }
+      }
+
+      try {
+        const btn = $("submitTaskBtn");
+        btn.disabled = true;
+        btn.textContent = "Menyimpan...";
+
+        const taskData = {
+          title: $("taskTitle").value.trim(),
+          courseId: $("courseSelect").value,
+          type: $("taskType").value,
+          target: target,
+          assignedTo: selectedStudents,
+          pjmkPhone: $("taskPjmkPhone").value.trim(),
+          dueAt: new Date($("dueAt").value),
+          description: $("taskDescription").value.trim()
+        };
+
+        if (editingTaskId) {
+          taskData.updatedAt = serverTimestamp();
+          await updateDoc(doc(db, "tasks", editingTaskId), taskData);
+          showToast("Tugas berhasil diperbarui.");
+        } else {
+          taskData.createdBy = currentUser.uid;
+          taskData.createdAt = serverTimestamp();
+          await addDoc(collection(db, "tasks"), taskData);
+          showToast("Tugas baru berhasil disimpan.");
+        }
+
+        resetFormToTambah();
+        await loadTasks();
+        if (currentRole === "admin") await loadAdminDashboard();
+      } catch (error) {
+        showToast("Gagal menyimpan tugas: " + error.message, true);
+        $("submitTaskBtn").disabled = false;
+        $("submitTaskBtn").textContent = editingTaskId ? "Update Tugas" : "Simpan tugas";
+      }
+    });
+
+    $("scheduleForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!currentUser || currentRole !== "admin") return;
+
+      try {
+        await addDoc(collection(db, "schedules"), {
+          courseId: $("scheduleCourseSelect").value,
+          timeText: $("scheduleTime").value.trim(),
+          zoomLink: $("scheduleLink").value.trim(),
+          createdAt: serverTimestamp()
+        });
+
+        event.target.reset();
+        showToast("Jadwal kuliah berhasil ditambahkan.");
+        await loadSchedules();
+      } catch (error) {
+        showToast("Gagal menyimpan jadwal: " + error.message, true);
+      }
+    });
+
+    $("cancelEditBtn").addEventListener("click", (e) => {
+      e.preventDefault();
+      resetFormToTambah();
+    });
+
+  } catch (error) {
+    $("loginBtn").disabled = true;
+    showToast("Firebase gagal diinisialisasi: " + error.message, true);
+  }
+}
+
+async function loadStudentsForAdmin() {
+  if (currentRole !== "admin") return;
+  try {
+    const snap = await getDocs(collection(db, "users"));
+    allStudentsList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() })).filter(u => u.role === "mahasiswa");
+    
+    $("studentCheckboxes").innerHTML = allStudentsList.length
+      ? allStudentsList.map(s => `
+          <label style="display:flex; align-items:center; gap:8px; font-weight:normal; font-size:0.9rem; cursor:pointer;">
+            <input type="checkbox" class="student-checkbox" value="${s.id}" style="width:auto; margin:0;">
+            ${escapeHtml(s.displayName || "Mahasiswa")} (${escapeHtml(s.email || "")})
+          </label>
+        `).join("")
+      : "<p class='muted'>Belum ada akun mahasiswa yang terdaftar.</p>";
+  } catch (e) {
+    console.error("Gagal memuat daftar mahasiswa");
+  }
+}
+
+function resetFormToTambah() {
+  $("taskForm").reset();
+  editingTaskId = null;
+  $("formTitle").textContent = "Panel Admin — Tambahkan tugas";
+  $("submitTaskBtn").textContent = "Simpan tugas";
+  $("submitTaskBtn").disabled = false;
+  $("cancelEditBtn").classList.add("hidden");
+  $("taskPjmkPhone").value = "628123456789";
+  $("specificStudentsContainer").classList.add("hidden");
+  document.querySelectorAll(".student-checkbox").forEach(cb => cb.checked = false);
+}
+
+async function loadAnnouncement() {
+  try {
+    const docSnap = await getDoc(doc(db, "settings", "announcement"));
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      $("announcementText").textContent = data.text || "Tidak ada pengumuman saat ini.";
+      $("announcementInput").value = data.text || "";
+    } else {
+      $("announcementText").textContent = "Belum ada pengumuman dari admin.";
+    }
+  } catch (e) {
+    $("announcementText").textContent = "Gagal memuat pengumuman.";
+  }
+}
+
+async function loadAdminDashboard() {
+  if (!db || !currentUser || currentRole !== "admin") return;
+  try {
+    const usersSnap = await getDocs(collection(db, "users"));
+    const students = usersSnap.docs.filter(item => item.data().role === "mahasiswa");
+    $("adminStudentCount").textContent = students.length;
+
+    const tasksSnap = await getDocs(collection(db, "tasks"));
+    const tasks = tasksSnap.docs.map(item => ({ id: item.id, ...item.data() }));
+    $("adminTaskCount").textContent = tasks.length;
+
+    const progressSnap = await getDocs(collection(db, "task_progress"));
+    const progressDocs = progressSnap.docs.map(item => ({ id: item.id, ...item.data() }));
+
+    const studentIds = new Set(students.map(student => student.id));
+    const validProgress = progressDocs.filter(progress => studentIds.has(progress.userId));
+
+    const completed = validProgress.filter(progress => progress.status === "selesai").length;
+    const doing = validProgress.filter(progress => progress.status === "dikerjakan").length;
+    
+    const totalExpected = students.length * tasks.length;
+    const todo = Math.max(0, totalExpected - completed - doing);
+
+    $("adminDoneCount").textContent = completed;
+    $("adminDoingCount").textContent = doing;
+    $("adminTodoCount").textContent = todo;
+
+    const studentMap = new Map(students.map(student => [student.id, student.data().displayName || "Mahasiswa"]));
+    
+    const tasksByCourse = {};
+    courses.forEach((c, idx) => {
+      tasksByCourse[String(idx + 1)] = { courseName: c, tasks: [] };
+    });
+
+    tasks.forEach(task => {
+      if (tasksByCourse[task.courseId]) {
+        tasksByCourse[task.courseId].tasks.push(task);
+      }
+    });
+
+    const progressMap = new Map(validProgress.map(p => [`${p.taskId}_${p.userId}`, p.status]));
+
+    let htmlOutput = "";
+
+    Object.keys(tasksByCourse).forEach(courseId => {
+      const courseGroup = tasksByCourse[courseId];
+      if (courseGroup.tasks.length === 0) return;
+
+      htmlOutput += `
+        <div style="background:var(--bg); border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:14px;">
+          <h3 style="margin:0 0 10px; font-size:1rem; color:var(--blue); display:flex; align-items:center; gap:8px;">
+            📚 ${escapeHtml(courseGroup.courseName)} <span class="pill" style="font-size:0.7rem;">${courseGroup.tasks.length} Tugas</span>
+          </h3>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+      `;
+
+      courseGroup.tasks.forEach(task => {
+        htmlOutput += `
+          <div style="background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px;">
+            <div style="font-weight:600; font-size:0.9rem; margin-bottom:6px;">📌 ${escapeHtml(task.title)}</div>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+        `;
+
+        students.forEach(student => {
+          const studentName = studentMap.get(student.id) || "Mahasiswa";
+          const status = progressMap.get(`${task.id}_${student.id}`) || "belum";
+          
+          let badgeBg = "rgba(220, 38, 38, 0.1)";
+          let badgeColor = "var(--red)";
+          let icon = "🔴";
+          
+          if (status === "selesai") {
+            badgeBg = "rgba(22, 163, 74, 0.1)";
+            badgeColor = "var(--green)";
+            icon = "✅";
+          } else if (status === "dikerjakan") {
+            badgeBg = "rgba(217, 119, 6, 0.1)";
+            badgeColor = "var(--amber)";
+            icon = "🟡";
+          }
+
+          htmlOutput += `
+            <span style="background:${badgeBg}; color:${badgeColor}; padding:4px 8px; border-radius:8px; font-size:0.75rem; font-weight:600; display:inline-flex; align-items:center; gap:4px;" title="${studentName}: ${status}">
+              ${icon} ${escapeHtml(studentName)}
+            </span>
+          `;
+        });
+
+        htmlOutput += `
+            </div>
+          </div>
+        `;
+      });
+
+      htmlOutput += `
+          </div>
+        </div>
+      `;
+    });
+
+    $("adminProgressList").innerHTML = htmlOutput || "<p class='muted'>Belum ada tugas atau mahasiswa yang terdaftar.</p>";
+
+  } catch (error) {
+    showToast("Dashboard Admin gagal dimuat: " + error.message, true);
+  }
+}
+
+async function loadSchedules() {
+  if (!db || !currentUser) return;
+
+  try {
+    const schedSnap = await getDocs(collection(db, "schedules"));
+    const schedules = schedSnap.docs.map(item => ({ id: item.id, ...item.data() }));
+
+    const deleteBtnHtml = (id) => currentRole === "admin" ? `<button class="danger" data-delete-sched="${id}" style="padding: 4px 10px; font-size: 0.75rem; margin-top: 8px;">Hapus</button>` : "";
+
+    $("scheduleList").innerHTML = schedules.length
+      ? `<div class="row">` + schedules.map(sched => {
+          const courseName = courses[Number(sched.courseId) - 1] || "Mata kuliah";
+          return `
+            <div class="card" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:space-between; background:var(--card);">
+              <div>
+                <span class="pill" style="margin-bottom:6px;">${escapeHtml(sched.timeText || "Waktu belum diatur")}</span>
+                <h3 style="font-size:1rem; margin: 4px 0 8px;">${escapeHtml(courseName)}</h3>
+              </div>
+              <div style="margin-top: 12px;">
+                <a href="${escapeHtml(sched.zoomLink)}" target="_blank" style="display:inline-block; background:var(--green); color:white; padding:8px 14px; border-radius:10px; text-decoration:none; font-size:0.85rem; font-weight:600;">
+                  📹 Gabung Kelas (Zoom)
+                </a>
+                ${deleteBtnHtml(sched.id)}
+              </div>
+            </div>
+          `;
+        }).join("") + `</div>`
+      : "<p class='muted'>Belum ada jadwal kuliah yang ditambahkan oleh admin.</p>";
+
+    if (currentRole === "admin") {
+      document.querySelectorAll("[data-delete-sched]").forEach(btn => {
+        btn.onclick = () => deleteSchedule(btn.dataset.deleteSched);
+      });
+    }
+  } catch (error) {
+    console.error("Gagal memuat jadwal:", error);
+  }
+}
+
+async function deleteSchedule(schedId) {
+  if (!confirm("Hapus jadwal ini?")) return;
+  try {
+    await deleteDoc(doc(db, "schedules", schedId));
+    showToast("Jadwal berhasil dihapus.");
+    loadSchedules();
+  } catch (error) {
+    showToast("Gagal menghapus jadwal: " + error.message, true);
+  }
+}
+
+async function loadTasks() {
+  if (!db || !currentUser) return;
+
+  try {
+    const taskSnap = await getDocs(query(collection(db, "tasks"), orderBy("dueAt", "asc")));
+    const tasks = taskSnap.docs.map(item => ({ id: item.id, ...item.data() }));
+
+    const visibleTasks = tasks.filter(task => {
+      if (currentRole === "admin") return true;
+      if (!task.target || task.target === "semua") return true;
+      if (task.target === "tertentu") {
+        return task.assignedTo && task.assignedTo.includes(currentUser.uid);
+      }
+      return true;
+    });
+    
+    allTasksData = tasks;
+    $("taskCount").textContent = visibleTasks.length;
+    
+    const progressQuery = query(collection(db, "task_progress"), where("userId", "==", currentUser.uid));
+    const progressSnap = await getDocs(progressQuery);
+    const myProgress = new Map(progressSnap.docs.map(item => [item.data().taskId, item.data()]));
+
+    const completedCount = [...myProgress.values()].filter(progress => progress.status === "selesai").length;
+    $("doneCount").textContent = `${completedCount} dari ${visibleTasks.length}`;
+
+    const percent = visibleTasks.length > 0 ? Math.round((completedCount / visibleTasks.length) * 100) : 0;
+    $("progressPercent").textContent = `${percent}%`;
+    $("progressBar").style.width = `${percent}%`;
+
+    const activeTasks = [];
+    const completedTasks = [];
+
+    visibleTasks.forEach(task => {
+      const progress = myProgress.get(task.id);
+      const status = progress?.status || "belum";
+      if (status === "selesai") {
+        completedTasks.push({ task, progress, status });
+      } else {
+        activeTasks.push({ task, progress, status });
+      }
+    });
+
+    const sortedTasks = [...activeTasks, ...completedTasks];
+
+    $("tasksList").innerHTML = sortedTasks.length
+      ? sortedTasks.map(({ task, progress, status }) => {
+          const due = task.dueAt?.toDate ? task.dueAt.toDate() : task.dueAt ? new Date(task.dueAt) : null;
+          const dueText = due && !isNaN(due.getTime()) ? due.toLocaleString("id-ID") : "Belum ditentukan";
+          const dueInfo = getDeadlineInfo(due); 
+          
+          const statusText = status === "selesai" ? "Selesai" : status === "dikerjakan" ? "Sedang dikerjakan" : "Belum dikerjakan";
+          const statusIcon = status === "selesai" ? "✅" : status === "dikerjakan" ? "🟡" : "🔴";
+          const statusClass = status === "selesai" ? "done" : status === "dikerjakan" ? "doing" : "todo";
+          const course = courses[Number(task.courseId) - 1] || "Mata kuliah";
+          const filterCategoryClass = status === "selesai" ? "task-done completed-task" : "task-active";
+          let targetBadge = `<span class="pill">🌐 Semua</span>`;
+          if (task.target === "kelompok") targetBadge = `<span class="pill" style="background:rgba(217, 119, 6, 0.1); color:var(--amber);">👥 Kelompok</span>`;
+          else if (task.target === "tertentu") targetBadge = `<span class="pill" style="background:rgba(147, 51, 234, 0.1); color:#9333ea;">👤 Khusus Anda</span>`;
+
+          const gcalUrl = generateGoogleCalendarUrl(task.title, course, due, task.description);
+
+          const taskPjmkPhone = task.pjmkPhone || "628123456789";
+          const waMessage = encodeURIComponent(`Assalamu'alaikum, mau bertanya terkait tugas [${course}] "${task.title}".`);
+          const waUrl = `https://wa.me/${taskPjmkPhone}?text=${waMessage}`;
+
+          const adminControls = currentRole === "admin" ? `
+            <div style="margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); display:flex; gap: 8px;">
+               <button class="secondary" data-edit="${escapeHtml(task.id)}" style="padding: 6px 12px; font-size: 0.85rem;">✏️ Edit</button>
+               <button class="danger" data-delete="${escapeHtml(task.id)}" style="padding: 6px 12px; font-size: 0.85rem;">🗑️ Hapus</button>
+            </div>
+          ` : "";
+
+          return `
+            <article class="task ${filterCategoryClass}">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                  <h3 style="margin:0 0 6px; font-size:1.1rem;">${escapeHtml(task.title || "Tugas tanpa judul")}</h3>
+                  <div class="muted" style="margin-bottom: 8px; display: flex; gap: 6px; flex-wrap: wrap;">
+                    <span class="pill" style="background:var(--line); color:var(--ink)">${escapeHtml(course)}</span> 
+                    <span class="pill" style="background:var(--line); color:var(--ink)">${escapeHtml(task.type || "tugas")}</span>
+                    ${targetBadge}
+                  </div>
+                </div>
+              </div>
+
+              <p style="margin: 8px 0; font-size: 0.95rem; line-height: 1.5;">${escapeHtml(task.description || "")}</p>
+
+              <div style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--line); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <div style="font-size: 0.85rem; line-height: 1.4;">
+                  <span class="muted">Tenggat:</span> <strong style="color:var(--ink)">${escapeHtml(dueText)}</strong><br>
+                  <span style="color: ${dueInfo.color}; font-weight: ${dueInfo.weight}; font-size: 0.8rem; margin-top: 2px; display: inline-block;">
+                    ${dueInfo.text}
+                  </span><br>
+                  <div style="display:flex; gap: 10px; margin-top: 6px;">
+                    <a href="${gcalUrl}" target="_blank" style="font-size:0.75rem; color:var(--blue); text-decoration:none; font-weight:600;">
+                    📅 + Google Calendar
+                    </a>
+                    <a href="${waUrl}" target="_blank" style="font-size:0.75rem; color:var(--green); text-decoration:none; font-weight:600;">
+                      💬 Hubungi PJMK
+                    </a>
+                  </div>
+                </div>
+                <div class="actions">
+                  <span class="status ${statusClass}" style="margin-right:8px; padding: 6px 10px; border-radius: 8px; background: var(--line);">
+                    ${statusIcon} ${statusText}
+                  </span>
+                  <button class="secondary" data-progress="${escapeHtml(task.id)}" data-status="${escapeHtml(status)}">
+                    Ubah Progres
+                  </button>
+                </div>
+              </div>
+              
+              ${adminControls}
+            </article>
+          `;
+        }).join("")
+      : "<p class='muted'>Hore! Belum ada tugas khusus saat ini.</p>";
+
+    document.querySelectorAll("[data-progress]").forEach(button => {
+      button.onclick = () => updateProgress(button.dataset.progress, button.dataset.status);
+    });
+
+    if (currentRole === "admin") {
+      document.querySelectorAll("[data-edit]").forEach(btn => {
+        btn.onclick = () => triggerEditTask(btn.dataset.edit);
+      });
+      document.querySelectorAll("[data-delete]").forEach(btn => {
+        btn.onclick = () => triggerDeleteTask(btn.dataset.delete);
+      });
+    }
+
+  } catch (error) {
+    showToast("Gagal memuat tugas/progres. Detail: " + error.message, true);
+  }
+}
+async function updateProgress(taskId, oldStatus) {
+  if (!currentUser || !db) return;
+  let nextStatus = "belum";
+  if (oldStatus === "belum") nextStatus = "dikerjakan";
+  else if (oldStatus === "dikerjakan") nextStatus = "selesai";
+  else if (oldStatus === "selesai") nextStatus = "belum";
+
+  try {
+    const progressId = `${taskId}_${currentUser.uid}`;
+    document.body.style.cursor = "wait";
+    await setDoc(doc(db, "task_progress", progressId), {
+      taskId, userId: currentUser.uid, status: nextStatus, updatedAt: serverTimestamp()
+    });
+    showToast("Progres tugas diperbarui.");
+    await loadTasks();
+    const activeFilterBtn = document.querySelector('.filter-btn:not(.secondary)');
+    if(activeFilterBtn) activeFilterBtn.click();
+    if (currentRole === "admin") await loadAdminDashboard();
+  } catch (error) {
+    showToast("Gagal memperbarui progres: " + error.message, true);
+  } finally {
+    document.body.style.cursor = "default";
+  }
+}
+
+function triggerEditTask(taskId) {
+  const task = allTasksData.find(t => t.id === taskId);
+  if (!task) return;
+
+  editingTaskId = taskId;
+  $("formTitle").textContent = "Panel Admin — Edit Tugas";
+  $("submitTaskBtn").textContent = "Update Tugas";
+  $("cancelEditBtn").classList.remove("hidden");
+
+  $("taskTitle").value = task.title || "";
+  $("courseSelect").value = task.courseId || "1";
+  $("taskType").value = task.type || "individu";
+  $("taskTarget").value = task.target || "semua";
+  $("taskPjmkPhone").value = task.pjmkPhone || "628123456789";
+  $("taskDescription").value = task.description || "";
+
+  const isTertentu = task.target === "tertentu";
+  $("specificStudentsContainer").classList.toggle("hidden", !isTertentu);
+  document.querySelectorAll(".student-checkbox").forEach(cb => {
+    cb.checked = isTertentu && task.assignedTo && task.assignedTo.includes(cb.value);
+  });
+
+  if (task.dueAt) {
+    const d = task.dueAt.toDate ? task.dueAt.toDate() : new Date(task.dueAt);
+    if (!isNaN(d.getTime())) {
+      const tzOffset = d.getTimezoneOffset() * 60000;
+      const localISOTime = (new Date(d.getTime() - tzOffset)).toISOString().slice(0, 16);
+      $("dueAt").value = localISOTime;
+    }
+  }
+
+  $("adminPanel").scrollIntoView({ behavior: 'smooth' });
+}
+
+async function triggerDeleteTask(taskId) {
+  const confirmDelete = confirm("Yakin ingin menghapus tugas ini?");
+  if (!confirmDelete) return;
+
+  try {
+    document.body.style.cursor = "wait";
+    await deleteDoc(doc(db, "tasks", taskId));
+    showToast("Tugas berhasil dihapus.");
+    await loadTasks();
+    if (currentRole === "admin") await loadAdminDashboard();
+  } catch (error) {
+    showToast("Gagal menghapus tugas: " + error.message, true);
+  } finally {
+    document.body.style.cursor = "default";
+  }
+}
+</script>
+</body>
+</html>
