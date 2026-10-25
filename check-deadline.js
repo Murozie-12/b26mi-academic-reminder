@@ -42,40 +42,62 @@ async function runRobot() {
       }
 
       // ==========================================
-      // MISI 2: CEK DEADLINE (H-3, H-1, 6 Jam, 1 Jam)
-      // ==========================================
-      if (task.dueAt) {
-        const dueDate = task.dueAt.toDate ? task.dueAt.toDate() : new Date(task.dueAt);
-        const diffMs = dueDate - now;
-        const diffHours = diffMs / (1000 * 60 * 60);
-        const diffDays = diffHours / 24;
+// MISI 2: CEK DEADLINE (H-3, H-1, 6 Jam, 1 Jam)
+// ==========================================
+if (task.dueAt) {
+  const dueDate = task.dueAt.toDate ? task.dueAt.toDate() : new Date(task.dueAt);
+  const diffMs = dueDate - now;
+  const diffHours = diffMs / (1000 * 60 * 60);
 
-        let notificationTitle = "";
-        let notificationBody = "";
+  // Abaikan jika sudah lewat deadline
+  if (diffHours > 0) {
+    // Ambil rekam jejak notifikasi sebelumnya (jika belum ada, buat objek kosong)
+    const notified = task.deadlineNotified || {};
+    let updatedNotified = { ...notified };
+    
+    let notificationTitle = "";
+    let notificationBody = "";
+    let shouldNotify = false;
 
-        if (diffDays >= 2.9 && diffDays <= 3.1) {
-          notificationTitle = "⚠️ Peringatan H-3 Deadline Tugas!";
-          notificationBody = `Tugas "${task.title}" akan deadline dalam 3 hari. Yuk mulai dicicil!`;
-        } 
-        else if (diffDays >= 0.9 && diffDays <= 1.1) {
-          notificationTitle = "🚨 Peringatan H-1 Deadline Tugas!";
-          notificationBody = `Besok adalah batas pengumpulan tugas "${task.title}"! Jangan sampai terlewat.`;
-        } 
-        else if (diffHours >= 5.8 && diffHours <= 6.2) {
-          notificationTitle = "⏰ Kurang 6 Jam Menuju Deadline!";
-          notificationBody = `Tugas "${task.title}" tinggal 6 jam lagi. Segera selesaikan dan kumpulkan!`;
-        } 
-        else if (diffHours >= 0.9 && diffHours <= 1.1) {
-          notificationTitle = "🔥 DARURAT: 1 Jam Lagi Deadline!";
-          notificationBody = `Waktu hampir habis untuk tugas "${task.title}"! Segera submit sekarang!`;
-        }
-
-        if (notificationTitle) {
-          console.log(`Deadline [${task.title}] memenuhi kriteria. Memproses peringatan...`);
-          await sendDeadlineNotification(taskId, task, notificationTitle, notificationBody);
-        }
-      }
+    // Cek dari yang paling darurat ke yang paling longgar
+    if (diffHours <= 1 && !notified.h1_urgent) {
+      notificationTitle = "🔥 DARURAT: 1 Jam Lagi Deadline!";
+      notificationBody = `Waktu hampir habis untuk tugas "${task.title}"! Segera submit sekarang!`;
+      updatedNotified.h1_urgent = true;
+      updatedNotified.h6 = true; updatedNotified.d1 = true; updatedNotified.d3 = true; // Kunci fase sebelumnya agar tidak mundur
+      shouldNotify = true;
+    } 
+    else if (diffHours <= 6 && diffHours > 1 && !notified.h6) {
+      notificationTitle = "⏰ Kurang 6 Jam Menuju Deadline!";
+      notificationBody = `Tugas "${task.title}" tinggal 6 jam lagi. Segera selesaikan dan kumpulkan!`;
+      updatedNotified.h6 = true;
+      updatedNotified.d1 = true; updatedNotified.d3 = true;
+      shouldNotify = true;
+    } 
+    else if (diffHours <= 24 && diffHours > 6 && !notified.d1) {
+      notificationTitle = "🚨 Peringatan H-1 Deadline Tugas!";
+      notificationBody = `Besok adalah batas pengumpulan tugas "${task.title}"! Jangan sampai terlewat.`;
+      updatedNotified.d1 = true;
+      updatedNotified.d3 = true;
+      shouldNotify = true;
+    } 
+    else if (diffHours <= 72 && diffHours > 24 && !notified.d3) {
+      notificationTitle = "⚠️ Peringatan H-3 Deadline Tugas!";
+      notificationBody = `Tugas "${task.title}" akan deadline dalam 3 hari. Yuk mulai dicicil!`;
+      updatedNotified.d3 = true;
+      shouldNotify = true;
     }
+
+    if (shouldNotify) {
+      console.log(`Memicu notifikasi deadline [${task.title}]: ${notificationTitle}`);
+      await sendDeadlineNotification(taskId, task, notificationTitle, notificationBody);
+      
+      // Simpan status bahwa notifikasi fase ini sudah dikirim ke database
+      await db.collection('tasks').doc(taskId).update({ deadlineNotified: updatedNotified });
+    }
+  }
+}
+      
     console.log("✅ Pengecekan selesai.");
   } catch (error) {
     console.error("Terjadi kesalahan:", error);
