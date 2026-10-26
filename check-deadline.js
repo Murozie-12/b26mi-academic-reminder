@@ -1,4 +1,6 @@
-const admin = require('firebase-admin');
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
+const { getMessaging } = require('firebase-admin/messaging');
 
 // Cek apakah Secret GitHub tersedia
 if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
@@ -8,16 +10,16 @@ if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
 
 try {
   const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
+  initializeApp({
+    credential: cert(serviceAccount)
   });
 } catch (error) {
   console.error("❌ Gagal memparsing JSON dari FIREBASE_SERVICE_ACCOUNT:", error.message);
   process.exit(1);
 }
 
-const db = admin.firestore();
-const messaging = admin.messaging();
+const db = getFirestore();
+const messaging = getMessaging();
 
 async function runRobot() {
   console.log("🤖 Mulai patroli: Mengecek tugas baru & deadline...");
