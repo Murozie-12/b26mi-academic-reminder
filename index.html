@@ -1,0 +1,1249 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>B26MI — Academic Reminder</title>
+<meta name="description" content="Pengingat tugas kuliah B26MI: deadline, progres, jadwal Zoom, dan pengumuman kelas.">
+<meta name="theme-color" content="#7c3aed">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fff8ee; --card:#ffffff; --ink:#2d1b4e; --muted:#6b5b84;
+  --blue:#7c3aed; --blue-hover:#6d28d9; --pink:#ff6b9d; --yellow:#ffd23f;
+  --green:#0f9d6b; --amber:#f59e0b; --red:#ef4444;
+  --line:#2d1b4e; --outline:#2d1b4e;
+  --pill-bg:#ffd23f; --pill-ink:#2d1b4e;
+  --grad-header:linear-gradient(120deg,#5b21b6 0%,#be185d 55%,#c2410c 100%);
+  --grad-hero:linear-gradient(135deg,#ffd23f 0%,#ff9ec7 55%,#b99cff 100%);
+  --mascot-body:#7c3aed; --mascot-spine:#5b21b6; --mascot-pencil:#ffd23f; --mascot-tip:#ffb347; --mascot-cheek:#ff6b9d; --mascot-hair:#4c1d95; --mascot-skin:#ffe3cc;
+  --radius:22px; --border-thick:3px;
+  --shadow:5px 5px 0 var(--outline);
+}
+[data-theme="dark"]{
+  --bg:#1a1033; --card:#261a47; --ink:#f5f0ff; --muted:#b9a9d9;
+  --blue:#a78bfa; --blue-hover:#c4b5fd; --pink:#ff7eb3; --yellow:#ffd23f;
+  --green:#34d399; --amber:#fbbf24; --red:#f87171;
+  --line:#6d5a9e; --outline:#c4b5fd;
+  --pill-bg:#3b2a6b; --pill-ink:#ffd23f;
+  --shadow:5px 5px 0 #000;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; font-family:'Nunito',system-ui,sans-serif; font-weight:600;
+  color:var(--ink); background-color:var(--bg);
+  background-image:
+    radial-gradient(circle at 8% 18%, rgba(255,210,63,.28) 0, rgba(255,210,63,.28) 110px, transparent 111px),
+    radial-gradient(circle at 92% 75%, rgba(76,201,240,.22) 0, rgba(76,201,240,.22) 150px, transparent 151px),
+    radial-gradient(rgba(45,27,78,.12) 1.4px, transparent 1.4px);
+  background-size:auto,auto,22px 22px; background-attachment:fixed;
+  transition:background-color .3s,color .3s;
+}
+
+/* Header */
+header{
+  background:var(--grad-header); color:#fff;
+  padding:20px 24px; display:flex; justify-content:space-between; align-items:center;
+  flex-wrap:wrap; gap:16px; border-bottom:var(--border-thick) solid var(--outline);
+}
+header h1{font-family:'Fredoka',sans-serif; font-size:1.7rem; font-weight:700; margin:0; text-shadow:2px 2px 0 rgba(45,27,78,.35);}
+header p{margin:2px 0 0; font-size:.95rem; font-weight:700; opacity:.95;}
+header > div:last-child{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+#loginBtn{background:var(--yellow); color:var(--outline);}
+#logoutBtn{background:var(--red);}
+#themeToggleBtn{background:#fff; color:var(--ink);}
+
+/* Tabs */
+.tab-nav{display:flex; gap:10px; padding:14px 24px; background:var(--card); overflow-x:auto; border-bottom:var(--border-thick) solid var(--line);}
+.tab-btn{
+  background:transparent; color:var(--muted); border:var(--border-thick) solid transparent; border-radius:999px;
+  padding:9px 18px; font-family:'Fredoka',sans-serif; font-size:.98rem; font-weight:600;
+  text-transform:none; letter-spacing:0; white-space:nowrap; box-shadow:none;
+}
+.tab-btn:hover{color:var(--ink); background:var(--bg); box-shadow:none;}
+.tab-btn.active{background:var(--yellow); color:var(--pill-ink); border-color:var(--outline); box-shadow:3px 3px 0 var(--outline);}
+.tab-pane{display:none}
+.tab-pane.active{display:block; animation:fadeIn .35s ease;}
+
+main{max-width:1050px; margin:auto; padding:24px 16px 60px;}
+.row{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:20px;}
+
+/* Hero / mascot */
+.hero{
+  position:relative; overflow:visible; display:flex; align-items:center; justify-content:space-between; gap:20px;
+  background:var(--grad-hero); color:#2d1b4e;
+  border:var(--border-thick) solid var(--outline); border-radius:28px; padding:26px 30px;
+  box-shadow:var(--shadow); margin-bottom:24px; animation:rise .5s ease backwards;
+}
+.hero h2{font-family:'Fredoka',sans-serif; font-size:1.7rem; margin:0 0 6px; letter-spacing:0; text-transform:none; color:#2d1b4e;}
+.hero p{margin:0; font-size:1rem; font-weight:700; line-height:1.5; max-width:460px; color:#2d1b4e;}
+
+/* Cards */
+.card{
+  background:var(--card); border:var(--border-thick) solid var(--line); border-radius:var(--radius);
+  padding:24px; box-shadow:var(--shadow); margin-bottom:20px;
+  transition:transform .2s, box-shadow .2s; animation:rise .45s ease backwards;
+}
+.card:hover{transform:translate(-2px,-2px); box-shadow:7px 7px 0 var(--outline);}
+h2{font-family:'Fredoka',sans-serif; font-size:1.35rem; font-weight:700; margin:0 0 16px; letter-spacing:0;}
+.muted{color:var(--muted); font-size:.9rem; font-weight:700;}
+.pill{
+  display:inline-block; border-radius:999px; padding:5px 14px; font-size:.78rem; font-weight:800;
+  background:var(--pill-bg); color:var(--pill-ink); border:2px solid var(--outline);
+}
+
+/* Buttons */
+button,input,select,textarea{font:inherit; transition:all .18s ease;}
+button{
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  border:var(--border-thick) solid var(--outline); border-radius:999px; background:var(--blue); color:#fff;
+  padding:11px 20px; cursor:pointer; font-family:'Fredoka',sans-serif; font-weight:600; font-size:.98rem;
+  letter-spacing:0; text-transform:none; box-shadow:0 4px 0 var(--outline);
+}
+button:hover:not(:disabled){transform:translateY(-2px); box-shadow:0 6px 0 var(--outline); filter:brightness(1.05);}
+button:active:not(:disabled){transform:translateY(3px); box-shadow:0 1px 0 var(--outline);}
+button:disabled{opacity:.5; cursor:not-allowed;}
+button.secondary{background:var(--card); color:var(--ink);}
+button.danger{background:var(--red); color:#fff;}
+button.success{background:#0b7d55; color:#fff;}
+button.warning{background:var(--yellow); color:#2d1b4e;}
+.close-modal{position:absolute; top:16px; right:16px; width:40px; height:40px; padding:0; border-radius:50%; background:var(--bg); color:var(--ink); box-shadow:none;}
+
+/* Forms */
+input,select,textarea{
+  width:100%; padding:13px 16px; border:var(--border-thick) solid var(--line); border-radius:16px;
+  background:var(--bg); color:var(--ink); margin:8px 0 16px; font-size:.98rem; font-weight:700;
+}
+input[type="checkbox"]{width:auto; margin:0; accent-color:var(--blue);}
+input:focus,select:focus,textarea:focus{border-color:var(--blue); outline:none; background:var(--card); box-shadow:0 0 0 4px rgba(124,58,237,.22);}
+label{font-family:'Fredoka',sans-serif; font-size:.95rem; font-weight:600; display:block; margin-bottom:2px; letter-spacing:0; text-transform:none;}
+
+/* Tasks */
+.task{
+  position:relative; border:var(--border-thick) solid var(--line); border-radius:var(--radius);
+  padding:22px 24px; margin:16px 0; background:var(--card); border-left:10px solid var(--blue);
+  box-shadow:var(--shadow); animation:rise .4s ease backwards;
+}
+.task.urgent{border-left-color:var(--red);}
+.task.completed-task{opacity:.72; border-left-color:var(--green); box-shadow:none;}
+.task.completed-task h3{text-decoration:line-through; text-decoration-thickness:2px;}
+.task h3{margin:0 0 10px; font-family:'Fredoka',sans-serif; font-size:1.25rem; font-weight:600; line-height:1.3; letter-spacing:0;}
+
+/* Empty states */
+.empty-state{
+  text-align:center; padding:56px 20px; color:var(--muted); background:var(--card);
+  border-radius:var(--radius); border:var(--border-thick) dashed var(--line); font-weight:800;
+}
+.empty-state span.icon{font-size:4.5rem; display:block; margin-bottom:12px; animation:float 2.6s ease-in-out infinite;}
+
+/* Filter bar */
+.sticky-filter{
+  position:sticky; top:0; z-index:10; background:var(--card); padding:12px; margin:0 0 20px;
+  border:var(--border-thick) solid var(--line); border-radius:18px; box-shadow:var(--shadow);
+  display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+}
+
+/* Progress */
+.progress-container{background:var(--bg); border-radius:999px; height:20px; width:100%; overflow:hidden; margin-top:14px; border:var(--border-thick) solid var(--line);}
+.progress-bar{
+  height:100%; width:0; border-radius:999px; background-color:var(--green);
+  background-image:linear-gradient(45deg,rgba(255,255,255,.28) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.28) 50%,rgba(255,255,255,.28) 75%,transparent 75%);
+  background-size:22px 22px; transition:width .6s cubic-bezier(.34,1.56,.64,1); animation:stripes 1s linear infinite;
+}
+
+/* Action links */
+.attachment-btn{
+  display:inline-flex; align-items:center; gap:8px; background:var(--card); color:var(--blue);
+  padding:9px 16px; border:var(--border-thick) solid var(--blue); border-radius:999px;
+  font-size:.88rem; font-weight:800; text-decoration:none; margin-top:12px; transition:.2s;
+}
+.attachment-btn:hover{background:var(--blue); color:#fff;}
+.action-link{
+  display:inline-flex; align-items:center; gap:6px; font-size:.88rem; font-weight:800; text-decoration:none;
+  padding:7px 14px; border-radius:999px; border:var(--border-thick) solid currentColor; background:var(--card); transition:.2s;
+}
+.action-link.calendar{color:var(--blue);}
+.action-link.calendar:hover{background:var(--blue); color:#fff;}
+.action-link.wa{color:var(--green);}
+.action-link.wa:hover{background:var(--green); color:#fff;}
+
+/* Modals */
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(26,16,51,.55); display:none; justify-content:center; align-items:center;
+  z-index:100; backdrop-filter:blur(6px); padding:16px;
+}
+.modal-overlay.active{display:flex; animation:fadeIn .2s ease;}
+.modal-content{
+  background:var(--card); padding:30px; border-radius:26px; border:var(--border-thick) solid var(--line);
+  width:100%; max-width:650px; max-height:90vh; overflow-y:auto; position:relative;
+  box-shadow:10px 10px 0 var(--outline); animation:pop .3s cubic-bezier(.34,1.56,.64,1);
+}
+
+/* Toasts */
+#toastContainer{position:fixed; bottom:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:10px; max-width:calc(100vw - 40px);}
+.toast{
+  background:var(--ink); color:var(--bg); padding:14px 20px; border-radius:18px; box-shadow:0 8px 0 rgba(0,0,0,.2);
+  font-size:.95rem; font-weight:800; display:flex; gap:10px; align-items:center;
+  animation:slideIn .35s cubic-bezier(.34,1.56,.64,1) forwards; transition:opacity .3s;
+}
+.toast.error{background:var(--red); color:#fff;}
+
+/* Confetti */
+.confetti-piece{position:fixed; top:-16px; width:10px; height:14px; border-radius:3px; z-index:10000; pointer-events:none; animation:confettiFall linear forwards;}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0} to{opacity:1}}
+@keyframes pop{from{transform:scale(.85); opacity:0} to{transform:scale(1); opacity:1}}
+@keyframes rise{from{opacity:0; transform:translateY(12px)} to{opacity:1; transform:none}}
+@keyframes float{0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)}}
+@keyframes wiggle{0%,100%{transform:rotate(0)} 25%{transform:rotate(-6deg)} 75%{transform:rotate(6deg)}}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)} 95%{transform:scaleY(.1)}}
+@keyframes stripes{to{background-position:22px 0}}
+@keyframes slideIn{from{transform:translateX(120px); opacity:0} to{transform:none; opacity:1}}
+@keyframes confettiFall{to{transform:translate3d(0,110vh,0) rotate(720deg)}}
+
+.hidden{display:none!important}
+
+/* Responsive */
+@media (max-width:600px){
+  header{padding:16px;}
+  header h1{font-size:1.4rem;}
+  .tab-nav{padding:10px 14px;}
+  main{padding:16px 12px 60px;}
+  .card{padding:18px;}
+  .hero{flex-direction:column-reverse; text-align:center; padding:22px;}
+  .hero h2{font-size:1.4rem;}
+  .hero p{margin:0 auto;}
+  .modal-content{padding:22px;}
+}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important; transition:none!important;}
+}
+
+/* Onboarding */
+.onboard-overlay{position:fixed; inset:0; background:rgba(26,16,51,.6); display:none; justify-content:center; align-items:center; z-index:200; backdrop-filter:blur(6px); padding:16px;}
+.onboard-overlay.active{display:flex; animation:fadeIn .25s ease;}
+.onboard-card{background:var(--card); border:var(--border-thick) solid var(--line); border-radius:26px; box-shadow:10px 10px 0 var(--outline); padding:32px 28px; max-width:420px; width:100%; text-align:center; animation:pop .3s cubic-bezier(.34,1.56,.64,1);}
+.onboard-icon{font-size:4.5rem; animation:float 2.6s ease-in-out infinite; margin-bottom:8px;}
+.onboard-card h2{font-size:1.5rem; margin-bottom:10px;}
+.onboard-card p{margin:0 0 20px; line-height:1.6; color:var(--muted); font-weight:700;}
+.onboard-dots{display:flex; justify-content:center; gap:8px; margin-bottom:22px;}
+.onboard-dots .dot{width:12px; height:12px; border-radius:50%; background:var(--line); opacity:.35; transition:.3s;}
+.onboard-dots .dot.active{opacity:1; background:var(--blue); transform:scale(1.25);}
+.onboard-actions{display:flex; gap:12px; justify-content:center;}
+.onboard-actions button{flex:1;}
+
+/* Warna maskot */
+.m-body{fill:var(--mascot-body);}
+.m-spine{fill:var(--mascot-spine);}
+.m-pencil{fill:var(--mascot-pencil);}
+.m-tip{fill:var(--mascot-tip);}
+.m-cheek{fill:var(--mascot-cheek);}
+.m-hair{fill:var(--mascot-hair);}
+.m-skin{fill:var(--mascot-skin);}
+.m-band{fill:none; stroke:var(--mascot-body); stroke-width:5; stroke-linecap:round;}
+.m-accent{fill:var(--mascot-pencil);}
+
+.mascot-area{position:relative; flex-shrink:0; width:150px; height:150px; margin-right:12px;}
+.mascot-btn,.mascot-btn:hover:not(:disabled),.mascot-btn:active:not(:disabled){display:block; width:100%; height:100%; padding:0; border:0; background:none; box-shadow:none; filter:none; animation:float 3.2s ease-in-out infinite;}
+.mascot-btn:focus-visible{outline:3px dashed var(--outline); outline-offset:6px; border-radius:50%;}
+.owl{width:100%; height:100%; display:block; overflow:visible; transition:transform .3s ease;}
+.mascot-btn:hover .owl{transform:rotate(-6deg) scale(1.04);}
+.owl .eye{transform-box:fill-box; transform-origin:center; animation:blink 4.5s infinite;}
+.owl .eye-r{animation-delay:.12s;}
+.owl.happy .eye{animation:none; transform:scaleY(.2);}
+.owl.jump{animation:owlJump .8s cubic-bezier(.34,1.56,.64,1);}
+.owl.flap .wing-l{transform-box:fill-box; transform-origin:100% 0%; animation:flapL .5s ease 3;}
+.owl.flap .wing-r{transform-box:fill-box; transform-origin:0% 0%; animation:flapR .5s ease 3;}
+.owl .sparkle{transform-box:fill-box; transform-origin:center; animation:twinkle 2.4s ease-in-out infinite;}
+.owl .s2{animation-delay:1.2s;}
+@keyframes owlJump{0%,100%{transform:none} 20%{transform:scale(1.1,.9)} 50%{transform:translateY(-28px) scale(.96,1.04)} 75%{transform:scale(1.04,.96)}}
+@keyframes flapL{50%{transform:rotate(-24deg)}}
+@keyframes flapR{50%{transform:rotate(24deg)}}
+@keyframes twinkle{50%{transform:scale(.55) rotate(45deg)}}
+.mascot-bubble{position:absolute; right:100%; top:8%; margin-right:10px; width:max-content; max-width:220px; background:#fff; color:#2d1b4e; border:var(--border-thick) solid var(--outline); border-radius:18px; padding:10px 14px; font-weight:800; font-size:.9rem; line-height:1.4; box-shadow:4px 4px 0 var(--outline); opacity:0; transform:translateX(8px) scale(.9); transform-origin:100% 50%; transition:opacity .25s, transform .3s cubic-bezier(.34,1.56,.64,1); pointer-events:none; z-index:5;}
+.mascot-bubble.show{opacity:1; transform:none;}
+@media (max-width:600px){ .mascot-bubble{right:auto; left:50%; top:auto; bottom:100%; margin:0 0 10px; transform:translate(-50%,8px) scale(.9); transform-origin:50% 100%;} .mascot-bubble.show{transform:translate(-50%,0);} .mascot-area{margin:0 auto 4px;} }
+
+.filter-search,.filter-course{margin:0; flex:1 1 180px;}
+.chip-group{display:flex; gap:8px; flex:1 1 100%; overflow-x:auto; padding:2px;}
+.sticky-filter .chip{padding:7px 14px; font-size:.85rem; background:var(--bg); color:var(--ink); border:2px solid var(--outline); box-shadow:none; white-space:nowrap;}
+.sticky-filter .chip.active{background:var(--yellow); color:var(--pill-ink); box-shadow:3px 3px 0 var(--outline);}
+.sticky-filter .chip:hover{box-shadow:2px 2px 0 var(--outline); transform:none; filter:none;}
+.badge{display:inline-block; margin-left:8px; padding:3px 10px; border-radius:999px; border:2px solid var(--outline); font-size:.72rem; font-weight:800; white-space:nowrap; vertical-align:middle;}
+.badge.done{background:var(--green); color:#fff;}
+.badge.overdue{background:var(--red); color:#fff;}
+.badge.urgent{background:var(--yellow); color:var(--pill-ink);}
+.task.overdue{background:linear-gradient(90deg,rgba(239,68,68,.1),transparent 60%),var(--card);}
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:11px 20px; border:var(--border-thick) solid var(--outline); border-radius:999px; background:var(--blue); color:#fff; font-family:'Fredoka',sans-serif; font-weight:600; font-size:.98rem; text-decoration:none; box-shadow:0 4px 0 var(--outline); transition:all .18s ease;}
+.btn:hover{transform:translateY(-2px); box-shadow:0 6px 0 var(--outline);}
+.btn.success{background:#0b7d55;}
+[data-theme="dark"] .btn.success,[data-theme="dark"] button.success{background:#047857;}
+.form-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+@media (max-width:600px){ .form-grid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>📚 B26MI Academic</h1>
+    <p>Pengingat tugas kuliah biar nggak ketinggalan ✨</p>
+  </div>
+  <div style="display:flex; gap:12px; align-items:center;">
+    <button id="themeToggleBtn" class="secondary" aria-label="Ganti tema" style="padding: 10px 14px; font-size: 1.2rem; border-color: transparent;">🌙</button>
+    <button id="loginBtn">LOGIN GOOGLE</button>
+    <button id="logoutBtn" class="danger hidden">LOGOUT</button>
+  </div>
+</header>
+
+<nav class="tab-nav hidden" id="mainNav">
+  <button class="tab-btn active" data-target="tab-dashboard">🏠 DASHBOARD</button>
+  <button class="tab-btn" data-target="tab-tasks">📚 TUGAS</button>
+  <button class="tab-btn admin-only hidden" data-target="tab-admin">⚙️ PANEL ADMIN</button>
+</nav>
+
+<main id="appArea" class="hidden">
+  
+  <!-- TAB: DASHBOARD -->
+  <div id="tab-dashboard" class="tab-pane active">
+  <section class="hero">
+    <div>
+      <h2>Halo, semangat kuliahnya! 👋</h2>
+      <p>Cek tenggat, catat progres, dan jangan sampai ada tugas yang kelewat ya. Kamu pasti bisa! 💪</p>
+    </div>
+    <div class="mascot-area">
+    <button type="button" class="mascot-btn" id="mascotBtn" aria-label="Maskot Hoo, klik untuk disapa">
+      <svg class="owl" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
+        <ellipse cx="100" cy="188" rx="50" ry="7" fill="#2d1b4e" opacity=".18"/>
+        <g stroke="#2d1b4e" stroke-width="3"><rect x="74" y="166" width="22" height="14" rx="6" fill="#ffb347"/><rect x="104" y="166" width="22" height="14" rx="6" fill="#ffb347"/></g>
+        <path d="M58 58 L50 30 L84 50 Z M142 58 L150 30 L116 50 Z" fill="var(--mascot-body)" stroke="#2d1b4e" stroke-width="3" stroke-linejoin="round"/>
+        <path class="wing wing-l" d="M50 100 C28 112 28 148 48 162 C58 138 60 116 50 100 Z" fill="var(--mascot-spine)" stroke="#2d1b4e" stroke-width="3" stroke-linejoin="round"/>
+        <path class="wing wing-r" d="M150 100 C172 112 172 148 152 162 C142 138 140 116 150 100 Z" fill="var(--mascot-spine)" stroke="#2d1b4e" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M100 46 C146 46 156 84 156 120 C156 160 132 176 100 176 C68 176 44 160 44 120 C44 84 54 46 100 46 Z" fill="var(--mascot-body)" stroke="#2d1b4e" stroke-width="3.5"/>
+        <ellipse cx="100" cy="150" rx="22" ry="16" fill="var(--mascot-skin)" stroke="#2d1b4e" stroke-width="2.5"/>
+        <ellipse cx="100" cy="104" rx="42" ry="32" fill="var(--mascot-skin)" stroke="#2d1b4e" stroke-width="2.5"/>
+        <g class="eye eye-l"><circle cx="82" cy="100" r="16" fill="#fff" stroke="#2d1b4e" stroke-width="3"/><g class="pupil"><circle cx="82" cy="100" r="8" fill="#2d1b4e"/><circle cx="85" cy="96" r="3" fill="#fff"/></g></g>
+        <g class="eye eye-r"><circle cx="118" cy="100" r="16" fill="#fff" stroke="#2d1b4e" stroke-width="3"/><g class="pupil"><circle cx="118" cy="100" r="8" fill="#2d1b4e"/><circle cx="121" cy="96" r="3" fill="#fff"/></g></g>
+        <path d="M94 116 L106 116 L100 128 Z" fill="#ffb347" stroke="#2d1b4e" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="64" cy="122" r="5" fill="#ff6b9d" opacity=".6"/><circle cx="136" cy="122" r="5" fill="#ff6b9d" opacity=".6"/>
+        <path d="M74 58 L74 76 Q100 88 126 76 L126 58 L100 70 Z" fill="#4c1d95" stroke="#2d1b4e" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M100 26 L146 46 L100 66 L54 46 Z" fill="#2d1b4e" stroke="#2d1b4e" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M134 50 L140 76" stroke="#ffd23f" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="140" cy="78" r="4.5" fill="#ffd23f" stroke="#2d1b4e" stroke-width="1.5"/>
+        <g class="pencil" transform="rotate(-30 166 146)"><rect x="154" y="140" width="28" height="8" rx="2" fill="#ffd23f" stroke="#2d1b4e" stroke-width="2.5"/><path d="M182 140 L190 144 L182 148 Z" fill="#ffb347" stroke="#2d1b4e" stroke-width="2" stroke-linejoin="round"/></g>
+        <path class="sparkle" d="M22 52 L25 61 L34 64 L25 67 L22 76 L19 67 L10 64 L19 61 Z" fill="#ffd23f" stroke="#2d1b4e" stroke-width="2"/>
+        <path class="sparkle s2" d="M176 30 L178 36 L184 38 L178 40 L176 46 L174 40 L168 38 L174 36 Z" fill="#4cc9f0" stroke="#2d1b4e" stroke-width="1.5"/>
+      </svg>
+    </button>
+    <div class="mascot-bubble" id="mascotBubble" role="status" aria-live="polite"></div>
+  </div>
+  </section>
+
+  <!-- Profil & Progres -->
+    <div class="row">
+      <section class="card">
+        <div class="muted">IDENTITAS PENGGUNA</div>
+        <h2 id="authStatus" style="margin: 8px 0;">MAHASISWA</h2>
+        <span id="rolePill" class="pill">MAHASISWA</span>
+        <button id="notifBtn" class="secondary hidden" style="margin-top:16px; width:100%; border-color: var(--blue); color: var(--blue);">🔔 AKTIFKAN NOTIFIKASI</button>
+      </section>
+      
+      <section class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="muted">PROGRES KESELURUHAN</div>
+          <span id="progressPercent" style="font-size: 1rem; font-weight: 800; color: var(--green);">0%</span>
+        </div>
+        <h2 id="doneCount" style="margin-top:8px; margin-bottom: 8px;">0 DARI 0 SELESAI</h2>
+        <div class="progress-container"><div id="progressBar" class="progress-bar"></div></div>
+      </section>
+    </div>
+
+    <!-- Pengumuman -->
+    <section class="card" style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(22, 163, 74, 0.05)); border-color: var(--blue);">
+      <h2 style="color: var(--blue);">📢 PENGUMUMAN KELAS</h2>
+      <div id="announcementText" style="font-size: 1rem; line-height: 1.6; font-weight: 600; white-space: pre-line; overflow-wrap: anywhere;">Memuat pengumuman...</div>
+      <img id="announcementImageView" style="max-width:100%; border-radius:8px; border: var(--border-thick) solid var(--line); margin-top:16px; display:none;" src="" alt="Gambar pengumuman dari admin">
+    </section>
+
+    <!-- Jadwal Kuliah -->
+    <section class="card">
+      <h2>📅 JADWAL KULIAH & ZOOM</h2>
+      <div id="scheduleList">
+        <div class="empty-state"><span class="icon">🗓️</span><p>MEMUAT JADWAL…</p></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- TAB: TUGAS -->
+  <div id="tab-tasks" class="tab-pane">
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+        <h2>DAFTAR TUGAS AKADEMIK</h2>
+        <button id="refreshBtn" class="secondary" style="padding: 8px 14px; font-size:0.8rem;">🔄 REFRESH</button>
+      </div>
+
+      <!-- Sticky Filter & Search Bar -->
+      <div class="sticky-filter" id="filterContainer">
+        <input type="search" id="searchTaskInput" class="filter-search" placeholder="Cari nama tugas..." aria-label="Cari nama tugas">
+        <select id="courseFilter" class="filter-course" aria-label="Filter mata kuliah">
+          <option value="all">Semua mata kuliah</option>
+        </select>
+        <div class="chip-group" role="group" aria-label="Filter status">
+          <button type="button" class="chip active" data-status="all" aria-pressed="true">Semua</button>
+          <button type="button" class="chip" data-status="active" aria-pressed="false">Belum selesai</button>
+          <button type="button" class="chip" data-status="done" aria-pressed="false">Selesai</button>
+        </div>
+      </div>
+
+      <div id="tasksList">
+        <div class="empty-state"><span class="icon">📚</span><p>MEMUAT TUGAS…</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: ADMIN PANEL -->
+  <div id="tab-admin" class="tab-pane admin-only hidden">
+    <!-- Admin Dashboard Statistik -->
+    <section class="card">
+      <h2>RINGKASAN AKADEMIK KELAS</h2>
+      <div class="row">
+        <div style="padding:16px; background:var(--bg); border:var(--border-thick) solid var(--line); border-radius:8px;"><div class="muted">MAHASISWA</div><h2 id="adminStudentCount" style="margin-top:8px;">0</h2></div>
+        <div style="padding:16px; background:var(--bg); border:var(--border-thick) solid var(--line); border-radius:8px;"><div class="muted">TOTAL TUGAS</div><h2 id="adminTaskCount" style="margin-top:8px;">0</h2></div>
+        <div style="padding:16px; background:var(--bg); border:var(--border-thick) solid var(--line); border-radius:8px;"><div class="muted">TOTAL SELESAI</div><h2 id="adminDoneCount" style="color:var(--green); margin-top:8px;">0</h2></div>
+      </div>
+    </section>
+
+    <!-- Tombol Aksi Admin via Modal -->
+    <section class="card row">
+      <button onclick="openModal('taskModal')" style="padding: 20px;">➕ TAMBAH TUGAS BARU</button>
+      <button onclick="openModal('announcementModal')" class="secondary" style="padding: 20px;">📢 PERBARUI PENGUMUMAN</button>
+      <button onclick="openAddScheduleModal()" class="secondary" style="padding: 20px;">📅 TAMBAH JADWAL</button>
+      <div style="padding:16px; background:var(--bg); border:var(--border-thick) solid var(--line); border-radius:16px; display:flex; flex-direction:column; justify-content:center;">
+        <span class="muted" style="font-size:0.8rem;">INFO PJMK</span>
+        <strong style="font-size:0.95rem;">📞 Nomor WA PJMK Permanen per Mata Kuliah (Aktif Otomatis)</strong>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>PROGRES MAHASISWA PER MK</h2>
+      <div id="adminProgressList">
+         <div class="empty-state"><span class="icon">📊</span><p>MEMUAT PROGRES...</p></div>
+      </div>
+    </section>
+  </div>
+
+</main>
+
+<!-- ================= MODALS ================= -->
+
+<!-- Modal Tugas -->
+<div class="modal-overlay" id="taskModal">
+  <div class="modal-content">
+    <button class="close-modal" onclick="closeAndResetTaskModal()">✖</button>
+    <h2 id="formTitle">TAMBAH TUGAS BARU</h2>
+    <form id="taskForm">
+      <label>NAMA TUGAS</label>
+      <input id="taskTitle" required placeholder="Contoh: Makalah Kelompok">
+      
+      <div class="form-grid">
+        <div><label>MATA KULIAH</label><select id="courseSelect" required></select></div>
+        <div><label>TENGGAT WAKTU</label><input id="dueAt" type="datetime-local" required></div>
+      </div>
+
+      <div class="form-grid">
+        <div><label>JENIS TUGAS</label><select id="taskType"><option value="individu">Individu</option><option value="kelompok">Kelompok</option></select></div>
+        <div><label>TARGET</label><select id="taskTarget">
+            <option value="semua">Semua Mahasiswa</option>
+            <option value="kelompok">Tertentu / Kelompok</option>
+        </select></div>
+      </div>
+
+      <div id="specificStudentsContainer" class="hidden" style="margin-top:12px; padding:16px; background:var(--bg); border:var(--border-thick) solid var(--line); border-radius:8px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom: 12px; border-bottom: 2px solid var(--line); padding-bottom: 8px;">
+          <label>PILIH MAHASISWA:</label>
+          <label style="font-size: 0.8rem; cursor:pointer;"><input type="checkbox" id="selectAllStudents"> PILIH SEMUA</label>
+        </div>
+        <div id="studentCheckboxes" style="max-height: 150px; overflow-y: auto; display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+      
+      <div style="margin-top:16px;"><div><label>LINK LAMPIRAN (OPSIONAL)</label><input type="url" id="taskLinkUrl" placeholder="https://drive.google.com/..."></div></div>
+
+      <label>INSTRUKSI / CATATAN</label>
+      <textarea id="taskDescription" rows="3" placeholder="Petunjuk pengerjaan..."></textarea>
+      
+      <button type="submit" id="submitTaskBtn" style="width:100%; margin-top:16px; padding:16px;">💾 SIMPAN TUGAS</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Pengumuman -->
+<div class="modal-overlay" id="announcementModal">
+  <div class="modal-content">
+    <button class="close-modal" onclick="closeModal('announcementModal')">✖</button>
+    <h2>PERBARUI PENGUMUMAN</h2>
+    <form id="announcementForm">
+      <label>ISI PENGUMUMAN</label>
+      <textarea id="announcementInput" rows="5" required></textarea>
+      <label>LINK GAMBAR (OPSIONAL)</label>
+      <input type="url" id="announcementImageUrl" placeholder="https://...">
+      <button type="submit" id="submitAnnouncementBtn" style="width:100%; margin-top:16px; padding: 16px;">🚀 PUBLIKASIKAN</button>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Jadwal -->
+<div class="modal-overlay" id="scheduleModal">
+  <div class="modal-content">
+    <button class="close-modal" onclick="closeAndResetScheduleModal()">✖</button>
+    <h2 id="scheduleFormTitle">TAMBAH JADWAL & LINK</h2>
+    <form id="scheduleForm">
+      <label>MATA KULIAH</label>
+      <select id="scheduleCourseSelect" required></select>
+      <label>HARI</label>
+      <select id="scheduleDay" required>
+        <option value="1">Senin</option>
+        <option value="2">Selasa</option>
+        <option value="3">Rabu</option>
+        <option value="4">Kamis</option>
+        <option value="5">Jumat</option>
+      </select>
+      <label>JAM MULAI (WIB)</label>
+      <input id="scheduleStart" type="time" required>
+      <label>JAM SELESAI (WIB)</label>
+      <input id="scheduleEnd" type="time" required>
+      <label>DOSEN (opsional)</label>
+      <input id="scheduleDosen" placeholder="Contoh: Husnuz Zuhad">
+      <label>CATATAN (opsional)</label>
+      <input id="scheduleNote" placeholder="Contoh: Jadwal minggu ini dimajukan">
+      <label>LINK ZOOM / GMEET</label>
+      <input id="scheduleLink" type="url" required placeholder="https://zoom.us/j/...">
+      <button type="submit" style="width:100%; margin-top:16px; padding: 16px;" class="success">✅ SIMPAN JADWAL</button>
+    </form>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-content" style="max-width:420px; text-align:center;">
+    <div style="font-size:3rem;">🤔</div>
+    <h2>Yakin?</h2>
+    <p id="confirmText" class="muted" style="font-size:1rem;"></p>
+    <div class="onboard-actions" style="margin-top:16px;">
+      <button class="secondary" id="confirmCancel">Batal</button>
+      <button class="danger" id="confirmOk">Ya, hapus</button>
+    </div>
+  </div>
+</div>
+
+<div class="onboard-overlay" id="onboardOverlay">
+  <div class="onboard-card">
+    <div class="onboard-icon" id="onboardIcon">🎉</div>
+    <h2 id="onboardTitle"></h2>
+    <p id="onboardText"></p>
+    <div class="onboard-dots" id="onboardDots"></div>
+    <div class="onboard-actions">
+      <button class="secondary" id="onboardSkip">Lewati</button>
+      <button id="onboardNext">Lanjut ➜</button>
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer" role="status" aria-live="polite"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, where, serverTimestamp, doc, getDoc, setDoc, deleteDoc, updateDoc, deleteField } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-messaging.js";
+
+// !!! MASUKKAN CONFIG FIREBASE ANDA DI SINI !!!
+const firebaseConfig = {
+  apiKey: "AIzaSyBsVOWrSKNO42A3vJ_baQNs1QoLhiBt3M0",
+  authDomain: "b26mi-academic-reminder.firebaseapp.com",
+  projectId: "b26mi-academic-reminder",
+  storageBucket: "b26mi-academic-reminder.firebasestorage.app",
+  messagingSenderId: "739552881698",
+  appId: "1:739552881698:web:c9e5d290e4e4c4a723ee7b"
+};
+  
+const $ = id => document.getElementById(id);
+
+// Data Nomor WA PJMK Permanen per Mata Kuliah
+const PJMK_NUMBERS = {
+  "BAHASA ARAB": "6287847978135",
+  "TEOSOFI": "6285813981546",
+  "TEORI BELAJAR DAN PSIKOLOGI": "6285971811922",
+  "PENULISAN KARYA ILMIAH": "6283140937255",
+  "BAHASA INDONESIA": "6285601878582",
+  "FILSAFAT PENDIDIKAN": "6281374880814",
+  "PANCASILA": "6281374880814",
+  "STUDI FIQIH": "6283131075000",
+  "SEJARAH PERADABAN ISLAM": "6285126024870",
+  "AGAMA ISLAM": "6285971811922"
+};
+
+// Confetti kecil saat tugas ditandai selesai
+const CONFETTI_COLORS = ["#7c3aed", "#ff6b9d", "#ffd23f", "#34d399", "#4cc9f0"];
+window.burstConfetti = () => {
+  for (let i = 0; i < 40; i++) {
+    const p = document.createElement("div");
+    p.className = "confetti-piece";
+    p.style.left = Math.random() * 100 + "vw";
+    p.style.background = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
+    p.style.animationDuration = (1.8 + Math.random() * 1.4) + "s";
+    p.style.animationDelay = Math.random() * 0.3 + "s";
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 3600);
+  }
+};
+let lastFocus = null;
+window.openModal = (id) => { lastFocus = document.activeElement; $(id).classList.add('active'); const f = $(id).querySelector('input,select,textarea'); if (f) f.focus(); };
+window.closeModal = (id) => { $(id).classList.remove('active'); if (lastFocus && lastFocus.focus) lastFocus.focus(); };
+
+const showToast = (text, isError = false) => {
+  const container = $("toastContainer");
+  const toast = document.createElement("div");
+  toast.className = `toast ${isError ? 'error' : 'success'}`;
+  toast.innerHTML = `<span>${isError ? '⚠️' : '✅'}</span> <span>${escapeHtml(text)}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = "0"; setTimeout(() => toast.remove(), 300); }, 4000);
+};
+
+window.addEventListener('online', () => showToast("Koneksi internet pulih kembali."));
+window.addEventListener('offline', () => showToast("Koneksi internet terputus.", true));
+
+const ONBOARD_STEPS = [
+  { icon: "🎉", title: "Selamat datang di B26MI!", text: "Semua tugas kuliah kamu terkumpul dalam satu layar biar nggak ada yang kelewat." },
+  { icon: "✅", title: "Cek & centang tugas", text: "Lihat sisa waktu tiap tugas, lalu tandai selesai untuk menaikkan progresmu. Ada confetti lho! 🎊" },
+  { icon: "🔔", title: "Aktifkan notifikasi", text: "Dapatkan pengingat di HP sebelum tenggat. Kamu bisa mengaktifkannya kapan saja lewat tombol di Dashboard." }
+];
+let onboardIdx = 0;
+function renderOnboard() {
+  const s = ONBOARD_STEPS[onboardIdx];
+  $("onboardIcon").textContent = s.icon;
+  $("onboardTitle").textContent = s.title;
+  $("onboardText").textContent = s.text;
+  $("onboardDots").innerHTML = ONBOARD_STEPS.map((_, i) => `<span class="dot ${i === onboardIdx ? 'active' : ''}"></span>`).join('');
+  $("onboardNext").textContent = onboardIdx === ONBOARD_STEPS.length - 1 ? "🚀 Mulai!" : "Lanjut ➜";
+}
+function closeOnboard() {
+  localStorage.setItem("onboarded", "1");
+  $("onboardOverlay").classList.remove("active");
+}
+function maybeOnboard() {
+  if (localStorage.getItem("onboarded")) return;
+  onboardIdx = 0;
+  renderOnboard();
+  $("onboardOverlay").classList.add("active");
+}
+$("onboardNext").addEventListener("click", () => {
+  if (onboardIdx < ONBOARD_STEPS.length - 1) { onboardIdx++; renderOnboard(); }
+  else closeOnboard();
+});
+$("onboardSkip").addEventListener("click", closeOnboard);
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active'); document.querySelectorAll('.tab-btn').forEach(b => b.setAttribute('aria-selected', String(b === btn)));
+    $(btn.dataset.target).classList.add('active');
+  });
+});
+
+const currentTheme = localStorage.getItem("theme") || "light";
+if (currentTheme === "dark") { document.documentElement.setAttribute("data-theme", "dark"); $("themeToggleBtn").textContent = "☀️"; }
+$("themeToggleBtn").addEventListener("click", () => {
+  let isDark = document.documentElement.hasAttribute("data-theme");
+  document.documentElement.toggleAttribute("data-theme");
+  localStorage.setItem("theme", isDark ? "light" : "dark");
+  $("themeToggleBtn").textContent = isDark ? "🌙" : "☀️";
+});
+
+const courses = [
+  "BAHASA ARAB", "TEOSOFI", "TEORI BELAJAR DAN PSIKOLOGI",
+  "PENULISAN KARYA ILMIAH", "BAHASA INDONESIA", "FILSAFAT PENDIDIKAN",
+  "PANCASILA", "STUDI FIQIH", "SEJARAH PERADABAN ISLAM", "AGAMA ISLAM"
+];
+
+const courseIcons = ["🕌", "🔮", "🧠", "✍️", "📖", "🤔", "🦅", "⚖️", "🏛️", "🌙"];
+const courseIcon = id => courseIcons[Number(id) - 1] || "📘";
+
+let app, auth, db, messaging, currentUser;
+let currentRole = "mahasiswa";
+let editingTaskId = null;
+let allTasksData = []; 
+let allMyProgress = new Map();
+let activeStatusFilter = "all";
+const pendingTasks = new Set();
+
+const IS_MOBILE = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+function safeUrl(u) { try { const x = new URL(u); return x.protocol === "https:" ? x.href : null; } catch (e) { return null; } }
+function rankTask(t, pm) { if (pm.get(t.id)?.status === 'selesai') return 2; const d = t.dueAt?.toDate ? t.dueAt.toDate() : new Date(t.dueAt); return d < new Date() ? 0 : 1; }
+function askConfirm(msg) {
+  return new Promise(resolve => {
+    $("confirmText").textContent = msg;
+    openModal("confirmModal");
+    const finish = v => { closeModal("confirmModal"); resolve(v); };
+    $("confirmOk").onclick = () => finish(true);
+    $("confirmCancel").onclick = () => finish(false);
+  });
+}
+async function withBusy(btn, label, fn) {
+  const original = btn.textContent;
+  btn.disabled = true; btn.textContent = label;
+  try { await fn(); }
+  catch (err) { console.error(err); showToast("Gagal menyimpan, coba lagi.", true); }
+  finally { btn.disabled = false; btn.textContent = original; }
+}
+function escapeHtml(v) { return String(v||"").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]); }
+
+function populateCourseSelects() {
+  const options = courses.map((c, i) => `<option value="${i + 1}">${escapeHtml(c)}</option>`).join("");
+  $("courseSelect").innerHTML = options;
+  $("scheduleCourseSelect").innerHTML = options;
+  $("courseFilter").innerHTML += options;
+}
+populateCourseSelects();
+
+$("taskTarget").addEventListener("change", (e) => {
+  $("specificStudentsContainer").classList.toggle("hidden", e.target.value !== "kelompok");
+});
+
+$("selectAllStudents").addEventListener("change", (e) => {
+  document.querySelectorAll(".student-checkbox").forEach(cb => cb.checked = e.target.checked);
+});
+
+function getDeadlineInfo(due) {
+  if (!due || isNaN(due.getTime())) return { text: "WAKTU TIDAK DITENTUKAN", color: "var(--muted)", weight: "800" };
+  const now = new Date();
+  const diffMs = due - now;
+  if (diffMs < 0) return { text: "⚠️ TERLEWAT", color: "var(--red)", weight: "800", overdue: true, urgent: true };
+  
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  
+  if (diffDays > 3) return { text: `MASIH ${diffDays} HARI`, color: "var(--green)", weight: "800" };
+  if (diffDays > 0) return { text: `SISA ${diffDays} HARI LAGI`, color: "var(--amber)", weight: "800" };
+  if (diffHours > 0) return { text: `🔴 SISA ${diffHours} JAM!`, color: "var(--red)", weight: "800", urgent: true };
+  return { text: "🔴 KURANG DARI 1 JAM!", color: "var(--red)", weight: "800", urgent: true };
+}
+
+function generateGoogleCalendarUrl(taskTitle, courseName, dueDate, description) {
+  if (!dueDate || isNaN(dueDate.getTime())) return "#";
+  const formatGCalTime = (date) => date.toISOString().replace(/-|:|\.\d\d\d/g,"");
+  const startTime = formatGCalTime(dueDate);
+  const endDateObj = new Date(dueDate.getTime() + 60 * 60 * 1000);
+  const endTime = formatGCalTime(endDateObj);
+  const text = encodeURIComponent(`Tugas [${courseName}]: ${taskTitle}`);
+  const details = encodeURIComponent(`${description || "Tidak ada catatan."}\n\nPengingat Akademik B26MI`);
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&dates=${startTime}/${endTime}&details=${details}`;
+}
+
+try {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  getRedirectResult(auth).catch(() => showToast("Login gagal, coba lagi.", true));
+  try { messaging = getMessaging(app); } catch (e) { console.warn("FCM tdk didukung"); }
+
+  $("loginBtn").addEventListener("click", async () => {
+    try { const p = new GoogleAuthProvider(); if (IS_MOBILE) await signInWithRedirect(auth, p); else await signInWithPopup(auth, p); } catch(e) { showToast("Login gagal", true); }
+  });
+  $("logoutBtn").addEventListener("click", async () => { await signOut(auth); location.reload(); });
+
+  $("notifBtn").addEventListener("click", async () => {
+    if (!currentUser) return showToast("Silakan login terlebih dahulu.", true);
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === "granted") {
+        const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+        const currentToken = await getToken(messaging, { 
+          vapidKey: 'BLX_G-kSYKO-WwP2MKwL-32DfAuT-h6SSOhjJE6yMe-IK6OnHhKfB10jwDibQ34nsUyPGNSkLPVM_NQG705y420',
+          serviceWorkerRegistration: registration
+        });
+
+        if (currentToken) {
+          await setDoc(doc(db, "fcm_tokens", currentUser.uid), {
+            uid: currentUser.uid, email: currentUser.email || "", token: currentToken, updatedAt: serverTimestamp()
+          }, { merge: true });
+          showToast("Notifikasi berhasil diaktifkan.");
+          $("notifBtn").classList.add("hidden");
+        } else {
+          showToast("Gagal mengambil token notifikasi.", true);
+        }
+      } else {
+        showToast("Izin notifikasi ditolak browser.", true);
+      }
+    } catch (err) {
+      showToast("Gagal mengaktifkan notifikasi.", true);
+    }
+  });
+
+  onAuthStateChanged(auth, async user => {
+    currentUser = user;
+    if(user) {
+      $("loginBtn").classList.add("hidden"); $("logoutBtn").classList.remove("hidden");
+      $("mainNav").classList.remove("hidden"); $("appArea").classList.remove("hidden");
+      $("authStatus").textContent = user.displayName.toUpperCase();
+      $("notifBtn").classList.remove("hidden");
+      
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      if(!userSnap.exists()) await setDoc(userRef, { displayName: user.displayName, email: user.email, role: "mahasiswa" });
+      currentRole = userSnap.exists() ? userSnap.data().role : "mahasiswa";
+      
+      $("rolePill").textContent = currentRole.toUpperCase();
+      if(currentRole === "admin") {
+        document.querySelectorAll(".admin-only").forEach(el => el.classList.remove("hidden"));
+        await loadStudentsForAdmin();
+        loadAdminDashboard();
+      }
+      
+      loadSchedules(); loadAnnouncement(); loadTasks();
+      maybeOnboard();
+    }
+  });
+} catch(e) { showToast("Gagal inisialisasi Firebase", true); }
+
+const filterTasks = () => renderTasks(allTasksData, allMyProgress);
+$("searchTaskInput").addEventListener("input", filterTasks);
+$("courseFilter").addEventListener("change", filterTasks);
+
+$("refreshBtn").addEventListener("click", () => { loadTasks(); loadSchedules(); showToast("Data diperbarui."); });
+
+function updateProgressStats() {
+  const completed = allTasksData.filter(t => allMyProgress.get(t.id)?.status === 'selesai').length;
+  const pct = allTasksData.length ? Math.round((completed / allTasksData.length) * 100) : 0;
+  $("doneCount").textContent = `${completed} DARI ${allTasksData.length} SELESAI`;
+  $("progressBar").style.width = `${pct}%`;
+  $("progressPercent").textContent = `${pct}%`;
+}
+
+async function loadTasks() {
+  if (!currentUser) return;
+  try {
+    const snap = await getDocs(query(collection(db, "tasks"), orderBy("dueAt", "asc")));
+    const progSnap = await getDocs(query(collection(db, "task_progress"), where("userId", "==", currentUser.uid)));
+    allMyProgress = new Map(progSnap.docs.map(d => [d.data().taskId, d.data()]));
+    allTasksData = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(t => {
+      if (currentRole === 'admin') return true;
+      if (t.target === 'semua' || !t.target) return true;
+      return t.assignedTo && t.assignedTo.includes(currentUser.uid);
+    });
+    updateProgressStats();
+    renderTasks(allTasksData, allMyProgress);
+  } catch (e) {
+    $("tasksList").innerHTML = `<div class="empty-state"><span class="icon">📡</span><p>GAGAL MEMUAT TUGAS.</p><button class="secondary" onclick="loadTasks()">🔄 COBA LAGI</button></div>`;
+  }
+}
+
+function renderTasks(tasks, progressMap) {
+  const searchQ = $("searchTaskInput").value.toLowerCase();
+  const courseQ = $("courseFilter").value;
+  const statusQ = activeStatusFilter;
+
+  const filtered = tasks.filter(t => {
+    const stat = progressMap.get(t.id)?.status || 'belum';
+    const matchSearch = t.title.toLowerCase().includes(searchQ);
+    const matchCourse = courseQ === 'all' || t.courseId === courseQ;
+    const matchStatus = statusQ === 'all' || (statusQ === 'done' && stat === 'selesai') || (statusQ === 'active' && stat !== 'selesai');
+    return matchSearch && matchCourse && matchStatus;
+  });
+
+  filtered.sort((a, b) => rankTask(a, progressMap) - rankTask(b, progressMap));
+
+  if(!filtered.length) {
+    $("tasksList").innerHTML = `<div class="empty-state"><span class="icon">📭</span><p>TIDAK ADA TUGAS DITEMUKAN.</p></div>`;
+    return;
+  }
+
+  $("tasksList").innerHTML = filtered.map(task => {
+    const stat = progressMap.get(task.id)?.status || 'belum';
+    const cName = courses[task.courseId - 1] || "MATA KULIAH";
+    const due = task.dueAt?.toDate ? task.dueAt.toDate() : new Date(task.dueAt);
+    
+    const dueInfo = getDeadlineInfo(due);
+    const isUrgent = dueInfo.urgent === true; const isOverdue = dueInfo.overdue === true && stat !== 'selesai';
+    
+    const gcalUrl = generateGoogleCalendarUrl(task.title, cName, due, task.description);
+    
+    // Ambil nomor WA PJMK secara otomatis berdasarkan nama mata kuliah
+    const pjmkPhone = PJMK_NUMBERS[cName] || "628123456789";
+    const waMessage = encodeURIComponent(`Assalamu'alaikum, mau bertanya terkait tugas [${cName}] "${task.title}".`);
+    
+    let btnHtml = stat === 'selesai' 
+      ? `<button class="secondary" onclick="updateTaskProgress('${task.id}', 'belum')">BATALKAN SELESAI</button>`
+      : `<button class="warning" onclick="updateTaskProgress('${task.id}', 'dikerjakan')">🟡 MULAI KERJAKAN</button>
+         <button class="success" onclick="updateTaskProgress('${task.id}', 'selesai')">✅ TANDAI SELESAI</button>`;
+
+    return `
+      <article class="task ${isUrgent && stat !== 'selesai' ? 'urgent' : ''} ${stat === 'selesai' ? 'completed-task' : ''} ${isOverdue ? 'overdue' : ''}">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <h3 style="margin:0; text-transform: uppercase;">${escapeHtml(task.title)}</h3>
+          ${stat === 'selesai' ? '<span class="badge done">SELESAI</span>' : isOverdue ? '<span class="badge overdue">TERLEWAT</span>' : isUrgent ? '<span class="badge urgent">SEGERA</span>' : ''}
+        </div>
+        
+        <div style="margin:12px 0; display:flex; flex-direction:column; gap:6px;">
+          <div><span class="pill">${courseIcon(task.courseId)} ${escapeHtml(cName)}</span></div>
+          <div style="font-size:0.9rem; font-weight:700;">TENGGAT: ${due.toLocaleString('id-ID')}</div>
+          <div style="color: ${dueInfo.color}; font-weight: ${dueInfo.weight}; font-size: 0.85rem;">
+            ${dueInfo.text}
+          </div>
+        </div>
+        
+        <p style="font-size:0.95rem; line-height: 1.6; font-weight:500; white-space:pre-line;">${escapeHtml(task.description)}</p>
+        
+        ${task.attachmentUrl ? `<div><a href="${escapeHtml(safeUrl(task.attachmentUrl) || '#')}" rel="noopener" target="_blank" class="attachment-btn">📎 BUKA LAMPIRAN</a></div>` : ''}
+        
+        <div style="margin-top: 16px; display:flex; gap: 12px; flex-wrap: wrap;">
+          <a href="${gcalUrl}" target="_blank" class="action-link calendar">📅 + GOOGLE CALENDAR</a>
+          <a href="https://wa.me/${pjmkPhone}?text=${waMessage}" target="_blank" class="action-link wa">💬 HUBUNGI PJMK</a>
+        </div>
+        
+        <div style="margin-top:20px; padding-top: 16px; border-top: var(--border-thick) dashed var(--line); display:flex; gap:12px; flex-wrap:wrap;">
+          ${btnHtml}
+          ${currentRole === 'admin' ? `<button class="secondary" onclick="editTask('${task.id}')">✏️ EDIT</button><button class="danger" onclick="deleteTask('${task.id}')">🗑️ HAPUS</button>` : ''}
+        </div>
+      </article>
+    `;
+  }).join('');
+}
+
+window.updateTaskProgress = async (taskId, newStatus) => {
+  if (pendingTasks.has(taskId)) return;
+  pendingTasks.add(taskId);
+  allMyProgress.set(taskId, { taskId, userId: currentUser.uid, status: newStatus });
+  if (newStatus === "selesai") burstConfetti();
+  updateProgressStats(); renderTasks(allTasksData, allMyProgress);
+  try {
+    await setDoc(doc(db, "task_progress", `${taskId}_${currentUser.uid}`), { taskId, userId: currentUser.uid, status: newStatus, updatedAt: serverTimestamp() });
+    showToast("Status diperbarui.");
+  } catch (e) { showToast("Gagal menyimpan status.", true); loadTasks(); }
+  finally { pendingTasks.delete(taskId); }
+};
+
+window.deleteTask = async (id) => {
+  if(await askConfirm("Hapus tugas ini secara permanen?")) { await deleteDoc(doc(db, "tasks", id)); showToast("Tugas dihapus."); loadTasks(); }
+};
+
+window.editTask = (id) => {
+  const t = allTasksData.find(x => x.id === id); if(!t) return;
+  editingTaskId = id;
+  $("formTitle").textContent = "EDIT TUGAS";
+  $("taskTitle").value = t.title; $("courseSelect").value = t.courseId; $("taskDescription").value = t.description || "";
+  if(t.dueAt) $("dueAt").value = new Date((t.dueAt.toDate ? t.dueAt.toDate() : new Date(t.dueAt)).getTime() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
+  $("taskTarget").value = t.target || "semua";
+  $("taskLinkUrl").value = t.attachmentUrl || "";
+  $("specificStudentsContainer").classList.toggle("hidden", t.target !== "kelompok");
+  document.querySelectorAll(".student-checkbox").forEach(cb => cb.checked = t.assignedTo?.includes(cb.value));
+  openModal('taskModal');
+};
+
+window.closeAndResetTaskModal = () => { $("taskForm").reset(); $("taskTarget").dispatchEvent(new Event("change")); editingTaskId = null; $("formTitle").textContent = "TAMBAH TUGAS BARU"; closeModal('taskModal'); };
+
+async function saveTask(e) {
+  e.preventDefault();
+  const uids = Array.from(document.querySelectorAll(".student-checkbox:checked")).map(cb => cb.value);
+  const data = {
+    title: $("taskTitle").value, courseId: $("courseSelect").value, dueAt: new Date($("dueAt").value),
+    type: $("taskType").value, target: $("taskTarget").value, assignedTo: uids, description: $("taskDescription").value,
+    attachmentUrl: $("taskLinkUrl").value, updatedAt: serverTimestamp()
+  };
+  
+  if(editingTaskId) await updateDoc(doc(db, "tasks", editingTaskId), data);
+  else { data.createdAt = serverTimestamp(); data.createdBy = currentUser.uid; await addDoc(collection(db, "tasks"), data); }
+  
+  showToast("Tugas berhasil disimpan."); closeAndResetTaskModal(); loadTasks();
+}
+$("taskForm").addEventListener("submit", e => { e.preventDefault(); withBusy($("submitTaskBtn"), "MENYIMPAN...", () => saveTask(e)); });
+
+$("announcementForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const btn = $("submitAnnouncementBtn");
+  btn.disabled = true; btn.textContent = "MENYIMPAN...";
+  try {
+    await setDoc(doc(db, "settings", "announcement"), {
+      text: $("announcementInput").value.trim(),
+      imageUrl: $("announcementImageUrl").value.trim() || null,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+    showToast("Pengumuman berhasil dipublikasikan.");
+    closeModal('announcementModal');
+    loadAnnouncement();
+  } catch (error) {
+    showToast("Gagal menyimpan pengumuman.", true);
+  } finally {
+    btn.disabled = false; btn.textContent = "🚀 PUBLIKASIKAN";
+  }
+});
+
+let editingScheduleId = null;
+const schedulesCache = new Map();
+const DAY_NAMES = ["", "Senin", "Selasa", "Rabu", "Kamis", "Jumat"];
+
+function resetScheduleForm() {
+  editingScheduleId = null;
+  $("scheduleForm").reset();
+  $("scheduleFormTitle").textContent = "TAMBAH JADWAL & LINK";
+}
+
+window.openAddScheduleModal = () => { resetScheduleForm(); openModal("scheduleModal"); };
+window.closeAndResetScheduleModal = () => { resetScheduleForm(); closeModal("scheduleModal"); };
+
+window.editSchedule = (id) => {
+  const s = schedulesCache.get(id); if (!s) return;
+  editingScheduleId = id;
+  $("scheduleFormTitle").textContent = "EDIT JADWAL";
+  $("scheduleCourseSelect").value = s.courseId;
+  $("scheduleDay").value = s.day || 1;
+  $("scheduleStart").value = s.startTime || "";
+  $("scheduleEnd").value = s.endTime || "";
+  $("scheduleDosen").value = s.dosen || "";
+  $("scheduleNote").value = s.note || "";
+  $("scheduleLink").value = s.zoomLink || "";
+  openModal("scheduleModal");
+};
+
+$("scheduleForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const startTime = $("scheduleStart").value, endTime = $("scheduleEnd").value;
+  if (!startTime || !endTime || endTime <= startTime) return showToast("Jam selesai harus setelah jam mulai.", true);
+
+  const data = {
+    courseId: Number($("scheduleCourseSelect").value),
+    day: Number($("scheduleDay").value),
+    startTime, endTime,
+    dosen: $("scheduleDosen").value.trim(),
+    note: $("scheduleNote").value.trim(),
+    zoomLink: $("scheduleLink").value.trim(),
+    updatedAt: serverTimestamp()
+  };
+  try {
+    if (editingScheduleId) {
+      await updateDoc(doc(db, "schedules", editingScheduleId), { ...data, timeText: deleteField() });
+      showToast("Jadwal berhasil diperbarui.");
+    } else {
+      await addDoc(collection(db, "schedules"), { ...data, createdAt: serverTimestamp() });
+      showToast("Jadwal kuliah berhasil disimpan.");
+    }
+    resetScheduleForm();
+    closeModal("scheduleModal");
+    loadSchedules();
+  } catch (error) {
+    showToast("Gagal menyimpan jadwal.", true);
+  }
+});
+
+window.deleteSchedule = async (id) => {
+  if (await askConfirm("Hapus jadwal ini?")) {
+    await deleteDoc(doc(db, "schedules", id));
+    showToast("Jadwal dihapus.");
+    loadSchedules();
+  }
+};
+
+function getScheduleStatus(s) {
+  if (!s.day || !s.startTime || !s.endTime) return "";
+  const now = new Date();
+  if (now.getDay() !== s.day) return "";
+  const toMin = t => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+  const cur = now.getHours() * 60 + now.getMinutes();
+  if (cur < toMin(s.startTime)) return `<span class="pill">⏳ HARI INI</span>`;
+  if (cur <= toMin(s.endTime)) return `<span class="pill" style="background:var(--red); color:#fff;">🔴 BERLANGSUNG</span>`;
+  return `<span class="muted">✔ Sudah selesai hari ini</span>`;
+}
+
+function scheduleCard(id, s, timeLabel) {
+  const status = getScheduleStatus(s);
+  const isAdmin = currentRole === "admin";
+  return `<div class="card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+    <div>
+      <strong style="font-size:1.1rem; text-transform:uppercase;">${courseIcon(s.courseId)} ${courses[Number(s.courseId) - 1] || ""}</strong><br>
+      <span class="muted" style="margin-top:4px; display:inline-block;">${escapeHtml(timeLabel)}</span>
+      ${s.dosen ? `<br><span class="muted">👤 ${escapeHtml(s.dosen)}</span>` : ""}
+      ${s.note ? `<br><span class="pill" style="margin-top:6px;">📝 ${escapeHtml(s.note)}</span>` : ""}
+      ${status ? `<div style="margin-top:6px;">${status}</div>` : ""}
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <a class="btn success" href="${escapeHtml(safeUrl(s.zoomLink) || '#')}" target="_blank" rel="noopener">📹 GABUNG</a>
+      ${isAdmin ? `<button class="secondary" aria-label="Edit jadwal" onclick="editSchedule('${id}')">✏️</button>
+      <button class="danger" aria-label="Hapus jadwal" onclick="deleteSchedule('${id}')">🗑️</button>` : ""}
+    </div>
+  </div>`;
+}
+
+function renderSchedules() {
+  const entries = [...schedulesCache.entries()];
+  if (!entries.length) {
+    $("scheduleList").innerHTML = `<div class="empty-state"><span class="icon">🗓️</span><p>BELUM ADA JADWAL.</p></div>`;
+    return;
+  }
+  const structured = entries
+    .filter(([, s]) => s.day)
+    .sort(([, a], [, b]) => a.day - b.day || (a.startTime || "").localeCompare(b.startTime || ""));
+  const legacy = entries.filter(([, s]) => !s.day);
+
+  let html = "", lastDay = null;
+  structured.forEach(([id, s]) => {
+    if (s.day !== lastDay) {
+      html += `<h3 style="margin:20px 0 8px; font-family:'Fredoka',sans-serif; color:var(--blue);">📆 ${DAY_NAMES[s.day]}</h3>`;
+      lastDay = s.day;
+    }
+    html += scheduleCard(id, s, `${s.startTime} s/d ${s.endTime} WIB`);
+  });
+  if (legacy.length) {
+    html += `<h3 style="margin:20px 0 8px; font-family:'Fredoka',sans-serif; color:var(--blue);">🗂️ LAINNYA</h3>`;
+    legacy.forEach(([id, s]) => { html += scheduleCard(id, s, s.timeText || "Jadwal belum diatur"); });
+  }
+  $("scheduleList").innerHTML = html;
+}
+
+async function loadSchedules() {
+  try {
+    const snap = await getDocs(collection(db, "schedules"));
+    schedulesCache.clear();
+    snap.docs.forEach(d => schedulesCache.set(d.id, d.data()));
+    renderSchedules();
+  } catch (e) {
+    $("scheduleList").innerHTML = `<div class="empty-state"><span class="icon">🗓️</span><p>GAGAL MEMUAT JADWAL.</p></div>`;
+  }
+}
+
+async function loadAnnouncement() {
+  try {
+    const docSnap = await getDoc(doc(db, "settings", "announcement"));
+    if(docSnap.exists()) {
+      const data = docSnap.data();
+      $("announcementText").textContent = data.text || "BELUM ADA PENGUMUMAN.";
+      if(data.imageUrl) { 
+        $("announcementImageView").src = data.imageUrl; 
+        $("announcementImageView").style.display = "block"; 
+      } else { $("announcementImageView").style.display = "none"; }
+    } else { $("announcementText").textContent = "BELUM ADA PENGUMUMAN DARI ADMIN."; }
+  } catch (error) { $("announcementText").textContent = "GAGAL MEMUAT PENGUMUMAN."; }
+}
+
+async function loadStudentsForAdmin() {
+  const snap = await getDocs(collection(db, "users"));
+  const students = snap.docs.filter(d => d.data().role === "mahasiswa");
+  $("studentCheckboxes").innerHTML = students.map(s => `<label style="font-weight:700; text-transform:uppercase;"><input type="checkbox" class="student-checkbox" value="${s.id}"> ${s.data().displayName}</label>`).join('');
+  $("adminStudentCount").textContent = students.length;
+}
+
+async function loadAdminDashboard() {
+  try {
+    const usersSnap = await getDocs(collection(db, "users"));
+    const students = usersSnap.docs.filter(d => d.data().role === "mahasiswa");
+    
+    const tasksSnap = await getDocs(collection(db, "tasks"));
+    const tasks = tasksSnap.docs.map(d => ({id: d.id, ...d.data()}));
+    
+    const progressSnap = await getDocs(collection(db, "task_progress"));
+    const validProgress = progressSnap.docs.map(d => d.data());
+
+    $("adminTaskCount").textContent = tasks.length;
+    $("adminDoneCount").textContent = validProgress.filter(p => p.status === "selesai").length;
+
+    const studentMap = new Map(students.map(s => [s.id, s.data().displayName]));
+    const progressMap = new Map(validProgress.map(p => [`${p.taskId}_${p.userId}`, p.status]));
+
+    let htmlOutput = "";
+    const tasksByCourse = {};
+    
+    courses.forEach((c, i) => tasksByCourse[i+1] = { name: c, tasks: [] });
+    tasks.forEach(t => { if(tasksByCourse[t.courseId]) tasksByCourse[t.courseId].tasks.push(t); });
+
+    Object.keys(tasksByCourse).forEach(cId => {
+      const group = tasksByCourse[cId];
+      if(group.tasks.length === 0) return;
+
+      htmlOutput += `<div style="background:var(--bg); border:var(--border-thick) solid var(--line); border-radius:var(--radius); padding:20px; margin-bottom:16px;">
+        <h3 style="margin:0 0 12px; color:var(--blue); font-size:1.1rem; font-weight:800;">${courseIcon(cId)} ${escapeHtml(group.name)}</h3>`;
+      
+      group.tasks.forEach(task => {
+        htmlOutput += `<div style="background:var(--card); border:var(--border-thick) solid var(--line); border-radius:8px; padding:12px; margin-bottom:12px; box-shadow: 4px 4px 0px rgba(0,0,0,0.05);">
+          <div style="font-weight:800; margin-bottom:8px; font-size:0.95rem; text-transform:uppercase;">📌 ${escapeHtml(task.title)}</div>
+          <div style="display:flex; flex-wrap:wrap; gap:8px;">`;
+        
+        let assigned = students;
+        if(task.target === 'kelompok' && task.assignedTo) { assigned = students.filter(s => task.assignedTo.includes(s.id)); }
+
+        assigned.forEach(stu => {
+          const stat = progressMap.get(`${task.id}_${stu.id}`) || "belum";
+          const isDone = stat === "selesai";
+          const bg = isDone ? "var(--green)" : (stat === "dikerjakan" ? "var(--amber)" : "transparent");
+          const color = isDone ? "#fff" : (stat === "dikerjakan" ? "#fff" : "var(--red)");
+          const border = isDone ? "var(--green)" : (stat === "dikerjakan" ? "var(--amber)" : "var(--red)");
+          const icon = isDone ? "✅" : (stat === "dikerjakan" ? "🟡" : "🔴");
+          
+          htmlOutput += `<span style="background:${bg}; color:${color}; border: 1px solid ${border}; padding:6px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; text-transform:uppercase;">
+            ${icon} ${escapeHtml(studentMap.get(stu.id) || "MAHASISWA")}
+          </span>`;
+        });
+        htmlOutput += `</div></div>`;
+      });
+      htmlOutput += `</div>`;
+    });
+
+    $("adminProgressList").innerHTML = htmlOutput || `<div class="empty-state"><span class="icon">📈</span><p>BELUM ADA TUGAS UNTUK MENAMPILKAN PROGRES.</p></div>`;
+  } catch(error) { $("adminProgressList").innerHTML = `<div class="empty-state"><span class="icon">⚠️</span><p>GAGAL MEMUAT PROGRES.</p></div>`; }
+}
+
+window.loadTasks = loadTasks;
+
+document.querySelectorAll('.chip[data-status]').forEach(chip => chip.addEventListener('click', () => {
+  activeStatusFilter = chip.dataset.status;
+  document.querySelectorAll('.chip[data-status]').forEach(c => { c.classList.toggle('active', c === chip); c.setAttribute('aria-pressed', String(c === chip)); });
+  filterTasks();
+}));
+setInterval(() => { if (currentUser && allTasksData.length) renderTasks(allTasksData, allMyProgress); }, 60000);
+setInterval(() => { if (schedulesCache.size) renderSchedules(); }, 60000);
+
+document.querySelectorAll('label:not([for])').forEach(l => { const n = l.nextElementSibling; if (n && n.id && /^(INPUT|SELECT|TEXTAREA)$/.test(n.tagName)) l.htmlFor = n.id; });
+document.querySelectorAll('.close-modal').forEach(b => b.setAttribute('aria-label', 'Tutup'));
+document.querySelectorAll('.modal-overlay').forEach(m => { m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true'); const h = m.querySelector('h2'); if (h) { h.id ||= m.id + '-title'; m.setAttribute('aria-labelledby', h.id); } });
+$("mainNav").setAttribute('role', 'tablist');
+document.querySelectorAll('.tab-btn').forEach(b => { b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(b.classList.contains('active'))); });
+
+document.addEventListener("keydown", e => {
+  const open = [...document.querySelectorAll(".modal-overlay.active")].pop();
+  if (!open) return;
+  if (e.key === "Escape") { if (open.id === "confirmModal") $("confirmCancel").click(); else closeModal(open.id); return; }
+  if (e.key === "Tab") {
+    const f = [...open.querySelectorAll("input,select,textarea,button")].filter(el => !el.disabled && el.offsetParent);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+});
+
+const owl = document.querySelector(".owl");
+const pupils = [...owl.querySelectorAll(".pupil")];
+document.addEventListener("pointermove", e => {
+  const r = owl.getBoundingClientRect(); if (!r.width) return;
+  const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height * 0.45);
+  const d = Math.hypot(dx, dy) || 1, k = Math.min(d / 150, 1) * 4;
+  const t = `translate(${(dx / d * k).toFixed(2)} ${(dy / d * k).toFixed(2)})`;
+  pupils.forEach(p => p.setAttribute("transform", t));
+});
+const MASCOT_LINES = ["Hoo-ray, semangat kuliahnya! 🦉", "Udah cek deadline hari ini belum?", "Satu tugas selesai = satu bintang ⭐", "Jangan lupa minum air, ya! 💧", "Kamu lebih hebat dari yang kamu kira 💪", "Pelan-pelan tapi pasti, Hoo!"];
+let mascotTimer, actTimer, lastLine = -1;
+$("mascotBtn").addEventListener("click", () => {
+  owl.classList.remove("jump", "flap", "happy"); void owl.getBoundingClientRect();
+  owl.classList.add("jump", "flap", "happy");
+  clearTimeout(actTimer); actTimer = setTimeout(() => owl.classList.remove("jump", "flap", "happy"), 1500);
+  let i; do { i = Math.floor(Math.random() * MASCOT_LINES.length); } while (i === lastLine); lastLine = i;
+  const bubble = $("mascotBubble");
+  bubble.textContent = MASCOT_LINES[i]; bubble.classList.add("show");
+  clearTimeout(mascotTimer); mascotTimer = setTimeout(() => bubble.classList.remove("show"), 3200);
+  if (Math.random() < .3) burstConfetti();
+});
+</script>
+</body>
+</html>
