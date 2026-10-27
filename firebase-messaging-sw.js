@@ -18,15 +18,10 @@ firebase.initializeApp(firebaseConfig);
 // 3. Inisialisasi Messaging
 const messaging = firebase.messaging();
 
-// 4. Tangkap pesan saat aplikasi di latar belakang (background)
+// Pesan FCM dengan field `notification` ditampilkan otomatis oleh Firebase
+// ketika website di background. Jangan panggil showNotification() lagi,
+// karena bisa membuat notifikasi muncul dua kali.
+// Handler ini hanya mencatat pesan untuk diagnostik.
 messaging.onBackgroundMessage(function(payload) {
-  console.log('[Service Worker] Menerima pesan di latar belakang: ', payload);
-
-  const notificationTitle = payload.notification.title || 'Pengingat Akademik B26MI';
-  const notificationOptions = {
-    body: payload.notification.body || 'Ada pembaruan tugas baru.',
-    // icon: '/path/to/icon.png' // (Opsional) jika Anda punya logo web
-  };
-
-  return self.registration.showNotification(notificationTitle, notificationOptions);
+  console.log('[Service Worker] Pesan background diterima:', payload?.messageId || 'tanpa ID');
 });
