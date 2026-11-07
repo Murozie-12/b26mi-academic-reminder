@@ -1,0 +1,100 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function profilePath() { return /databases/$(database)/documents/users/$(request.auth.uid); }
+    function hasProfile() { return signedIn() && exists(profilePath()); }
+    function isAdmin() { return hasProfile() && get(profilePath()).data.role == 'admin'; }
+    function approved() {
+      return hasProfile() && (isAdmin() || get(profilePath()).data.get('membershipStatus', '') == 'approved');
+    }
+    function own(uid) { return signedIn() && request.auth.uid == uid; }
+    function validStatus(status) { return status in ['belum', 'dikerjakan', 'selesai']; }
+
+    match /users/{userId} {
+      allow get: if own(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isAdmin() || (
+        own(userId)
+        && request.resource.data.keys().hasOnly(['displayName','email','role','membershipStatus','createdAt'])
+        && request.resource.data.keys().hasAll(['displayName','email','role','membershipStatus'])
+        && request.resource.data.role == 'mahasiswa'
+        && request.resource.data.membershipStatus == 'pending'
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.displayName is string
+        && request.resource.data.displayName.size() <= 160
+      );
+      allow update, delete: if isAdmin();
+
+      match /personal_tasks/{taskId} {
+        allow read: if own(userId) && approved();
+        allow create: if own(userId) && approved()
+          && request.resource.data.keys().hasOnly(['title','dueAt','status','createdAt','updatedAt'])
+          && request.resource.data.keys().hasAll(['title','dueAt','status','createdAt','updatedAt'])
+          && request.resource.data.title is string
+          && request.resource.data.title.size() > 0
+          && request.resource.data.title.size() <= 160
+          && request.resource.data.dueAt is string
+          && request.resource.data.dueAt.size() <= 40
+          && validStatus(request.resource.data.status)
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.updatedAt == request.time;
+        allow update: if own(userId) && approved()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt'])
+          && validStatus(request.resource.data.status)
+          && request.resource.data.updatedAt == request.time;
+        allow delete: if own(userId) && approved();
+      }
+    }
+
+    match /courses/{id} { allow read: if approved(); allow write: if isAdmin(); }
+    match /tasks/{id} { allow read: if approved(); allow write: if isAdmin(); }
+    match /schedules/{id} { allow read: if approved(); allow write: if isAdmin(); }
+    match /presentations/{id} { allow read: if approved(); allow write: if isAdmin(); }
+    match /announcements/{id} { allow read: if approved(); allow write: if isAdmin(); }
+    match /settings/{id} { allow read: if approved(); allow write: if isAdmin(); }
+    match /pjmk_contacts/{id} { allow read: if approved(); allow write: if isAdmin(); }
+    match /groups/{id} {
+      allow get, list: if approved() && (isAdmin() || (resource.data.memberUids is list && request.auth.uid in resource.data.memberUids));
+      allow write: if isAdmin();
+    }
+    match /notifications/{id} {
+      allow get, list: if approved() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow write: if isAdmin();
+    }
+    match /fcm_tokens/{userId} {
+      allow get: if own(userId) && approved();
+      allow list: if false;
+      allow create, update: if own(userId) && approved()
+        && request.resource.data.keys().hasOnly(['uid','email','token','updatedAt'])
+        && request.resource.data.keys().hasAll(['uid','email','token','updatedAt'])
+        && request.resource.data.uid == userId
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.token is string
+        && request.resource.data.token.size() > 0
+        && request.resource.data.token.size() <= 4096
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if own(userId) || isAdmin();
+    }
+    match /task_progress/{progressId} {
+      allow get: if approved() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow list: if approved() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow create: if approved()
+        && request.resource.data.keys().hasOnly(['taskId','userId','status','updatedAt'])
+        && request.resource.data.keys().hasAll(['taskId','userId','status','updatedAt'])
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.taskId is string
+        && request.resource.data.taskId.size() > 0
+        && progressId == request.resource.data.taskId + '_' + request.auth.uid
+        && exists(/databases/$(database)/documents/tasks/$(request.resource.data.taskId))
+        && validStatus(request.resource.data.status)
+        && request.resource.data.updatedAt == request.time;
+      allow update: if approved()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt'])
+        && validStatus(request.resource.data.status)
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if isAdmin();
+    }
+  }
+}
