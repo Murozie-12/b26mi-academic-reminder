@@ -1,0 +1,29 @@
+name: B26MI Academic Deadline Reminder
+on:
+  schedule:
+    - cron: '*/15 * * * *' # UTC; every 15 minutes, best-effort schedule
+  workflow_dispatch:
+concurrency:
+  group: b26mi-academic-reminder
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  run-reminder:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Firebase Admin SDK
+        run: npm install --no-save --no-audit --no-fund firebase-admin
+      - name: Check deadlines and send FCM
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          APP_URL: ${{ vars.B26MI_APP_URL }}
+        run: node check-deadline.js
+        
